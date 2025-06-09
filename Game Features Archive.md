@@ -378,4 +378,40 @@
 ## Aesthetic Progression
 - **The Hot Gates**: Greek pottery pixel art - bold black figures, geometric patterns
 - **Jade Mountain**: Eastern scroll pixel art - misty mountains, flowing robes, detailed architecture
-- **Age of Titans**: Moebius-
+- **Age of Titans**: Moebius-inspired pixel art - cosmic landscapes, flowing linework, psychedelic elements
+- **New Albion**: Friendly WH40K pixel art - noble space knights, cyan/purple palette, heraldic symbols
+
+## New Albion Terminology (Anglish)
+### Computing & Technology
+- **Reckoner** - computer
+- **Reckon gem** - processor/CPU
+- **Runeblock** - data storage device
+- **Runewright** - software developer/programmer
+- **Sparkcraft** - electricity
+- **Sparkways** - electrical conduits/wires
+- **Thinkwright** - computer/hardware engineer
+
+### Materials & Equipment
+- **Ironstone** - metal ore (with color coding: grey/red/white/yellow)
+- **Wardplate** - powered armor/knightly power armor
+- **Glowbrand** - power sword/energy sword
+- **Lodestone** - natural magnet/magnetic ore
+- **Lodefield** - magnetic field
+
+## Current Implementation Status
+### ✅ **Core Systems Implemented**
+- **2.5D Cardinal Rail Camera System** - 4 cardinal orientations with locked directions
+- **Dual-Arm IK Control System** - Independent arm control with inverse kinematics
+- **Cardinal Movement System** - Orientation-aware A/D movement with Q/E rotation
+- **Entity2D5D Rendering System** - 2D characters in 3D space via SubViewport
+- **Modular Input System** - MouseKeyboard and Controller input with chording support
+- **Coordinate & Navigation Systems** - Real-time HUD with grid reference
+- **Debug & Development Tools** - Comprehensive diagnostics and emergency recovery
+
+### 🚀 **Ready for Implementation**
+- **Terrain System**: Smooth block-based terrain with special stair/ladder mechanics
+- **Leg IK**: Ground contact for slopes and uneven surfaces
+- **Stance System**: L2/R2 controls with equipment-dependent availability
+- **Built-in Actions**: Throwing mechanics with prediction arcs
+- **Basic Combat**: Equipment-based stance targeting with force calculations
+- **Body Composition**: Layered anatomy system for realistic damage and harvesting
