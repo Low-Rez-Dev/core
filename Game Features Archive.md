@@ -82,11 +82,13 @@
 
 ## Technical Implementation
 ### 2.5D Cardinal Rail Camera System
-- 4 cardinal orientations with locked camera positions
-- Camera follows player on rails, cannot rotate independently
-- E-W axis: camera faces North (looking South)
-- N-S axis: camera faces East (looking West)
-- Q/E rotation affects entire player+camera system together
+- **4 Cardinal Orientations**: Camera locked to cardinal positions, follows movement axis
+- **Rail Following**: Camera slides parallel to Movement Axis, maintains fixed distance
+- **Hard Cardinal Snapping**: Instant 90° rotations, no smooth camera transitions
+- **Movement-Depth Integration**: 
+  - Camera rail runs parallel to current Movement Axis
+  - Depth Axis changes provide tactical Z-positioning
+  - Q/E rotation affects entire player+camera+axis system together
 
 ### Entity2D5D Rendering System
 - Base class for all 2D entities in 3D space
@@ -95,17 +97,25 @@
 - Always face camera orientation with discrete Z-positioning
 
 ### Coordinate & Navigation Systems
-- Real-time HUD showing position, axis orientation, camera rail
-- Grid reference: X0=Prime Meridian, Z0=Equator
-- Coordinate conversion to degrees/minutes/seconds/milliseconds
-- Cardinal coordinate system with live tracking
+- **3D Grid System**: Discrete 1-meter increments with cardinal orientation
+- **Dual-Axis Movement**: Movement Axis (free analog) vs Depth Axis (discrete lanes)
+- **Grid Reference**: X0=Prime Meridian, Z0=Equator
+- **Coordinate Conversion**: Degrees/minutes/seconds/milliseconds display format
+- **Real-time HUD**: Position, current movement/depth axes, camera orientation
+- **Axis Relationships**:
+  - Facing East/West: X=Movement Axis, Z=Depth Axis  
+  - Facing North/South: Z=Movement Axis, X=Depth Axis
 
 ### Movement System
-- Orientation-aware input mapping
-- A/D movement relative to current camera view
-- Two movement axes: E-W (Z-direction) and N-S (X-direction)
-- Speed control: walking (1.5 m/s) vs running (4.0 m/s)
-- Discrete 1-meter coordinate system with orientation switching
+- **Dual-Axis System**: Current cardinal facing determines Movement vs Depth axes
+- **Movement Axis**: Free analog movement along facing direction (A/D keys)
+- **Depth Axis**: Discrete 1-meter lane stepping perpendicular to movement (D-pad Up/Down)
+- **Cardinal Rotation**: Q/E swaps which world axis serves as Movement vs Depth
+- **Speed Control**: Walking (1.5 m/s) vs running (4.0 m/s) on Movement Axis
+- **Tactical Applications**:
+  - Formation combat: Smooth positioning within ranks
+  - Lane changes: Discrete stepping between battle lines
+  - Building navigation: Fluid room movement, discrete floor changes
 
 ### Body Controller & IK System
 - Inverse kinematics using law of cosines for realistic arm movement
