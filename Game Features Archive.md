@@ -124,7 +124,58 @@
 - Arm reach limiting and natural joint positioning
 - Rest positions at hip level with facing-aware adjustments
 
-## Focus/Attention System
+## Combat & Damage Systems
+### Physics-Based Damage
+- **Force Calculation**: (Muscle Strength × Technique Efficiency) + (Weapon Mass × Swing Speed) + Momentum Transfer
+- **Armor Hardness Thresholds**: Materials require specific force levels to penetrate
+- **Damage Distribution**:
+  - Below threshold: 100% force damages armor durability
+  - Above threshold: Excess force damages character, armor still degrades
+  - Blunt force: Always does reduced damage through armor
+- **Grip Strength**: Affects energy transfer efficiency and disarming resistance
+
+### Dismemberment & Medical Systems
+- **Dismemberment Mechanics**: Massive force thresholds, joint targeting, sharp weapon bonuses
+- **Medical Consequences**: Ki loss from bleeding, shock effects, field medicine with tourniquets
+- **Setting-Specific Recovery**:
+  - Hot Gates/Jade Mountain: Permanent character limitation
+  - Age of Titans: Tribal succession, spiritual compensation
+  - New Albion: Advanced sparkcraft prosthetics with runic interfaces
+
+## Terrain & Navigation Systems
+### Terrain Design Philosophy
+- **Smooth Within Blocks**: Gentle slopes, no sudden height changes within 1-meter grid blocks
+- **Sharp Changes at Boundaries**: Dramatic height differences occur at exact lane boundaries
+- **Ant Farm Cross-Sections**: Each depth lane shows clean terrain slice from current camera angle
+
+### Special Terrain Types
+**Stair Blocks:**
+- **Camera-Dependent Behavior**: 
+  - Front view: Platform mechanics (jump up/down, Down+Jump to drop through)
+  - Side view: Normal terrain surfaces for leg IK
+- **Default Position**: Bottom step when entering stair block
+- **Ascent Methods**: Jump or D-pad Up to climb
+- **Same Lane Navigation**: No depth changes needed when viewed from front
+
+**Moveable Ladders:**
+- **Cardinal Placement Only**: North, East, South, West orientations
+- **Height Bridging**: Connects blocks with different elevations
+- **Dual Behavior**: Platform mode (front view) vs ramp mode (side view)
+- **Player Moveable**: Can be repositioned and rotated for tactical/puzzle use
+
+### Climbing & Rope Systems
+**Rope Mechanics:**
+- **Climb Stance**: L2/R2 to enter climbing mode
+- **Alternating Arms**: L/R triggers for proper hand-over-hand technique
+- **Grip Strength Control**: Tight grip for control, loose grip for sliding
+- **Descent Options**: Controlled rappelling vs emergency fast sliding
+- **Diagonal Zip-Lines**: Gravity-powered descent with speed control
+
+**Grappling Hooks:**
+- **Dual-Arm Throwing**: Wind up and trajectory control
+- **Combat Applications**: Disarm shields, entangle weapons, tactical positioning
+- **Traversal**: Wall scaling, gap crossing, quick descent
+- **Physics Integration**: Rope tension, weight limits, environmental factors
 - Focus cone from character head to cursor/right stick direction
 - Sharp vision within focus cone
 - Blurred vision at peripheries
@@ -232,7 +283,41 @@
 - **Territorial Conflicts**: Overlapping claims create natural diplomatic tensions
 - **Environmental Storytelling**: Territorial layers tell the story of past activities
 
-### Stance System
+### Built-in Action Systems
+**Core Throwing Mechanics:**
+- **Built-in Patterns**: System provides proper biomechanics automatically
+- **Prediction Arc**: Skill-based accuracy of trajectory preview
+- **Progressive Learning**: Practice improves arc precision
+- **Weapon Integration**: Javelins, rocks, grappling hooks, improvised projectiles
+
+**Equipment-Dependent Stances:**
+- **Tool Requirements**: Stances only available with appropriate equipment
+- **Targeting Categories**: Combat (enemies), Woodcutting (trees), Mining (ore), Harvesting (crops)
+- **Collision Layer Control**: Stance determines valid interaction targets
+- **Multi-Tool Capability**: Primitive tools unlock multiple stances (hand axe for combat/woodcutting/crafting)
+
+### Body Composition System
+**Layered Anatomy (Outside to Inside):**
+1. **Armor**: Metal/leather protection
+2. **Clothes**: Fabric coverings  
+3. **Outer Layer**: Fur (mammals), Feathers (birds), Scales (reptiles/fish)
+4. **Skin**: Hide/leather source
+5. **Meat**: Food and sustenance
+6. **Bone**: Tools, weapons, structure
+7. **Organs**: Heart, liver, brain (location-specific)
+
+**Damage & Resource System:**
+- **Layer Penetration**: Damage propagates through layers based on force
+- **Butchering Stance**: Required for proper carcass processing
+- **Material Quality**: Undamaged parts yield superior materials
+- **Species Variation**: Different animals provide unique material properties
+- **Processing Techniques**: Dual-arm harvesting with skill requirements
+
+**Game Progression:**
+- **Hot Gates**: Earth animals, basic materials
+- **Jade Mountain**: Medicinal/spiritual applications
+- **Age of Titans**: Megafauna with massive material yields
+- **New Albion**: Procedural alien biology with exotic technomagical materials
 - Indicates intention and available move sets
 - Controls collision layers for context-appropriate interactions
 - **Stance Types**:
@@ -256,12 +341,17 @@
 - **L2/R2 Control**: Cycle through stances with shoulder buttons
 
 ### Muscle Memory System
-- **Complex Motion Recording**: Record combat moves, crafting techniques, daily routines
-- **Replayable Patterns**: Store sequences with precise timing and coordination
-- **Character Development**: Characters develop "muscle memory" for frequently practiced motions
-- **Quick Execution**: Mastered techniques can be triggered rapidly in combat/crafting
-- **Skill Progression**: Repeated practice improves execution speed and precision
-- **Teaching Integration**: Recorded patterns can be demonstrated to other players
+- **Relative Movement Recording**: Records semantic movements like [retract arm][away from][enemy]
+- **Contextual Actions**: [extend arm][towards][enemy] for thrusts, adaptable to different situations
+- **Grasp State Tracking**: [parallel/perpendicular to forearm], [swing from perpendicular to parallel]
+- **Stance-Specific Mapping**: Same gesture means different actions in different stances
+- **Combat Applications**:
+  - Sword: arm up + perpendicular grip = overhead slash
+  - Bow: arrow arm back + parallel grip = draw bowstring
+  - Spear: retract + extend sequence = thrust attack
+- **Weapon Adaptation**: Recorded techniques work across similar weapon types
+- **Teaching Integration**: Players learn semantic meaning, not just muscle motion
+- **Grip Strength Integration**: Affects disarming resistance and stamina usage
 
 ### Knowledge Transfer System
 - **Technique Demonstration**: Players record complex motions and show them to others
@@ -288,39 +378,4 @@
 ## Aesthetic Progression
 - **The Hot Gates**: Greek pottery pixel art - bold black figures, geometric patterns
 - **Jade Mountain**: Eastern scroll pixel art - misty mountains, flowing robes, detailed architecture
-- **Age of Titans**: Moebius-inspired pixel art - cosmic landscapes, flowing linework, psychedelic elements
-- **New Albion**: Friendly WH40K pixel art - noble space knights, cyan/purple palette, heraldic symbols
-
-## New Albion Terminology (Anglish)
-### Computing & Technology
-- **Reckoner** - computer
-- **Reckon gem** - processor/CPU
-- **Runeblock** - data storage device
-- **Runewright** - software developer/programmer
-- **Sparkcraft** - electricity
-- **Sparkways** - electrical conduits/wires
-- **Thinkwright** - computer/hardware engineer
-
-### Materials & Equipment
-- **Ironstone** - metal ore (with color coding: grey/red/white/yellow)
-- **Wardplate** - powered armor/knightly power armor
-- **Glowbrand** - power sword/energy sword
-- **Lodestone** - natural magnet/magnetic ore
-- **Lodefield** - magnetic field
-
-## Current Implementation Status
-### ✅ **Core Systems Implemented**
-- **2.5D Cardinal Rail Camera System** - 4 cardinal orientations with locked directions
-- **Dual-Arm IK Control System** - Independent arm control with inverse kinematics
-- **Cardinal Movement System** - Orientation-aware A/D movement with Q/E rotation
-- **Entity2D5D Rendering System** - 2D characters in 3D space via SubViewport
-- **Modular Input System** - MouseKeyboard and Controller input with chording support
-- **Coordinate & Navigation Systems** - Real-time HUD with grid reference
-- **Debug & Development Tools** - Comprehensive diagnostics and emergency recovery
-
-### 🚀 **Ready for Implementation**
-- Stance system with L2/R2 controls
-- Combat mechanics with tactical formation gameplay
-- NPC entities using Entity2D5D base class
-- Environmental interactions with Z-axis depth
-- Basic crafting system for survival items
+- **Age of Titans**: Moebius-
