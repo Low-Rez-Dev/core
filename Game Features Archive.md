@@ -183,6 +183,41 @@
 - Enables hidden object discovery and item identification
 - Creates tactical awareness gameplay
 
+## Advanced Rendering Systems
+
+### Solipsistic Coordinates System
+**Player-Centric Reality:**
+- **Fixed Observer**: Player consciousness is the only fixed point in reality
+- **Entity Manifestation**: All entities exist in virtual space but only manifest when observed
+- **Perception Radius**: Entities within 500m perception range become visible/active
+- **Performance Optimization**: Only manifested entities run expensive visual/audio systems
+
+**Virtual Entity System:**
+- **Universal Existence**: All entities continue autonomous behavior regardless of manifestation
+- **Manifestation State**: Entities enable complex behaviors only when observed
+- **Spatial Partitioning**: Grid-based optimization for entity management
+- **Reality Shifts**: Entities entering/leaving perception trigger manifestation changes
+
+**Coordinate Transformation:**
+- **Cardinal Orientations**: 4 viewing angles with coordinate transformation matrices
+- **Observer-Relative**: All positions calculated relative to player consciousness
+- **Depth Effects**: Progressive blur and transparency for background/foreground layers
+- **Consciousness Center**: Player always at screen center (640, 360)
+
+### Procedural Shape Rendering System
+**No Sprites Required:**
+- **Code-Based Drawing**: Everything rendered procedurally using draw commands
+- **Entity-Specific Patterns**: Different drawing methods for players, enemies, buildings, trees
+- **Detail Level Scaling**: Visual complexity adjusts based on manifestation distance
+- **Performance Adaptive**: Complex details only when entities are manifested
+
+**Drawing Categories:**
+- **Player Characters**: Dual-arm IK integration with procedural body/head/limb rendering
+- **Enemies**: Animated procedural shapes with breathing, movement patterns
+- **Buildings**: Constructed geometry with window/door details based on distance
+- **Organic Entities**: Trees with wind animation, organic shape variation
+- **Effects**: Explosions, magic circles, particle-like procedural effects
+
 ## Advanced Systems (Future Implementation)
 
 ### Chakra System
@@ -414,4 +449,4 @@
 - **Stance System**: L2/R2 controls with equipment-dependent availability
 - **Built-in Actions**: Throwing mechanics with prediction arcs
 - **Basic Combat**: Equipment-based stance targeting with force calculations
-- **Body Composition**: Layered anatomy system for realistic damage and harvesting 
+- **Body Composition**: Layered anatomy system for realistic damage and harvesting
