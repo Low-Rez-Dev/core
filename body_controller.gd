@@ -18,6 +18,7 @@ class_name BodyController
 @export var arm_return_speed = 5.0  # How fast arms return to rest position
 
 var facing_right = true
+var debug_ik_active = false
 
 # Calculated properties
 var arm_reach: float
@@ -40,6 +41,10 @@ func update_proportions():
 	hip_width = (torso_width * hip_width_ratio) * body_scale
 	shoulder_y = (-(torso_height * 0.5) + (torso_height * shoulder_height_ratio)) * body_scale
 	proportions_changed.emit()
+
+func get_ik_engagement_range() -> float:
+	# IK mode should engage at about 75% of full arm reach for natural feel
+	return arm_reach * 0.75
 
 func get_shoulder_pos(is_left: bool) -> Vector2:
 	# Arms stay on anatomically correct sides - no swapping
@@ -66,54 +71,82 @@ func set_arm_target(is_left_arm: bool, target_position: Vector2, interpolation_s
 		current_right_target = current_right_target.move_toward(target_position, interpolation_speed)
 
 func calculate_ik_arm(shoulder_pos: Vector2, target_pos: Vector2, is_left_arm: bool) -> Dictionary:
-	var distance = target_pos.length()
+	# Convert absolute target position to relative position from shoulder
+	var relative_target = target_pos - shoulder_pos
+	var distance = relative_target.length()
 	var scaled_reach = arm_reach
 	
-	# Clamp to reachable distance
-	var clamped_target = target_pos
-	if distance > scaled_reach:
-		clamped_target = target_pos.normalized() * scaled_reach
-		distance = scaled_reach
+	# DEBUG: Print IK calculation inputs and intermediate values (commented out to reduce spam)
+	# print("[BODY_CONTROLLER] IK for %s arm | Target pos: %s | Shoulder pos: %s | Relative target: %s | Distance: %.2f" % [
+	# 	"LEFT" if is_left_arm else "RIGHT", target_pos, shoulder_pos, relative_target, distance
+	# ])
 	
-	# Calculate elbow position using law of cosines
-	var a = upper_arm_length * body_scale  # Shoulder to elbow
-	var b = lower_arm_length * body_scale  # Elbow to hand  
-	var c = distance  # Shoulder to hand
+	# Determine if target is within reach for precise IK or pointing mode
+	var ik_threshold = scaled_reach
+	var within_reach = distance <= ik_threshold
 	
-	# Prevent invalid triangle (when target too close)
-	var min_distance = abs(a - b) + 1.0
-	if distance < min_distance:
-		clamped_target = clamped_target.normalized() * min_distance
-		c = min_distance
+	# DEBUG: Print IK engagement data when arms are active
+	if debug_ik_active:
+		print("=== IK DEBUG ===")
+		print("Distance to target: %.2f" % distance)
+		print("Arm reach (threshold): %.2f" % ik_threshold) 
+		print("Upper arm length: %.2f" % (upper_arm_length * body_scale))
+		print("Lower arm length: %.2f" % (lower_arm_length * body_scale))
+		print("Within reach: %s" % ("YES" if within_reach else "NO"))
+		print("Mode: %s" % ("PRECISE IK" if within_reach else "POINTING"))
+		print("==================")
 	
-	# Angle at shoulder using law of cosines
-	var cos_angle_a = (a*a + c*c - b*b) / (2*a*c)
-	cos_angle_a = clamp(cos_angle_a, -1.0, 1.0)
-	var angle_a = acos(cos_angle_a)
-	
-	var target_angle = atan2(clamped_target.y, clamped_target.x)
-	
-	# FIXED: Make both arms bend the same way based on facing direction
-	var elbow_direction = 1.0  # Default: bend downward/outward
-	
-	if facing_right:
-		# When facing right: both arms bend downward (like blue arm was doing)
-		elbow_direction = 1.0  # Both arms bend down/outward
+	if within_reach:
+		# PRECISE IK MODE: Hand tracks cursor exactly, elbow bends naturally
+		var clamped_target = relative_target
+		
+		# Prevent invalid triangle (when target too close)
+		var min_distance = abs((upper_arm_length - lower_arm_length) * body_scale) + 1.0
+		if distance < min_distance:
+			clamped_target = relative_target.normalized() * min_distance
+			distance = min_distance
+		
+		# Calculate elbow position using law of cosines
+		var a = upper_arm_length * body_scale  # Shoulder to elbow (original length)
+		var b = lower_arm_length * body_scale  # Elbow to hand (original length)
+		var c = distance  # Shoulder to hand
+		
+		# Angle at shoulder using law of cosines
+		var cos_angle_a = (a*a + c*c - b*b) / (2*a*c)
+		cos_angle_a = clamp(cos_angle_a, -1.0, 1.0)
+		var angle_a = acos(cos_angle_a)
+		
+		var target_angle = atan2(clamped_target.y, clamped_target.x)
+		
+		# Elbow bending direction based on facing
+		var elbow_direction = 1.0 if facing_right else -1.0
+		
+		var elbow_angle = target_angle + (angle_a * elbow_direction)
+		var elbow_pos_relative = Vector2(cos(elbow_angle), sin(elbow_angle)) * a
+		
+		return {
+			"shoulder": shoulder_pos,
+			"elbow": shoulder_pos + elbow_pos_relative,
+			"hand": shoulder_pos + clamped_target,
+			"mode": "precise"
+		}
 	else:
-		# When facing left: both arms bend downward (like red arm when facing left)
-		elbow_direction = -1.0  # Both arms bend down/outward from left perspective
+		# POINTING MODE: Arms fully extended toward cursor
+		var pointing_direction = relative_target.normalized()
+		var extended_reach = scaled_reach
+		
+		# Elbow positioned partway along the extended arm
+		var elbow_distance = upper_arm_length * body_scale
+		var elbow_pos_relative = pointing_direction * elbow_distance
+		var hand_pos_relative = pointing_direction * extended_reach
+		
+		return {
+			"shoulder": shoulder_pos,
+			"elbow": shoulder_pos + elbow_pos_relative,
+			"hand": shoulder_pos + hand_pos_relative,
+			"mode": "pointing"
+		}
 	
-	var elbow_angle = target_angle + (angle_a * elbow_direction)
-	var elbow_pos_relative = Vector2(cos(elbow_angle), sin(elbow_angle)) * a
-	
-	# Convert everything back to character-center coordinates
-	var result = {
-		"shoulder": shoulder_pos,
-		"elbow": shoulder_pos + elbow_pos_relative,
-		"hand": shoulder_pos + clamped_target
-	}
-	
-	return result
 
 func rotate_position_with_facing(original_position: Vector2) -> Vector2:
 	# REMOVED: This function was causing arm swapping - arms stay on correct sides

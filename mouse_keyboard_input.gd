@@ -115,28 +115,39 @@ func get_mouse_position_relative_to_character() -> Vector2:
 		var mouse_2d = (mouse_screen - center) * 0.5
 		return mouse_2d
 	
-	# Get mouse position in screen space
+	# ZOOM-INDEPENDENT APPROACH: Use viewport center instead of character projection
+	# This completely eliminates zoom dependency by using screen center as reference
+	
 	var mouse_screen = get_viewport().get_mouse_position()
+	var viewport_size = get_viewport().get_visible_rect().size
+	var viewport_center = viewport_size / 2
 	
-	# Get character's 3D position - find the character node
-	var character_node = get_parent() # Should be Character2D5D
-	if not character_node:
-		return Vector2.ZERO
+	# Calculate relative mouse position from screen center
+	var mouse_relative_screen = mouse_screen - viewport_center
 	
-	# Use character center position for consistent tracking
-	#var character_3d_pos = character_node.global_position + Vector3(0, 1, 0)  # Center of character
-	var character_3d_pos = character_node.global_position 
-	# Project character position to screen
-	var character_screen = camera_3d.unproject_position(character_3d_pos)
+	# Convert to character 2D coordinate space
+	# SubViewport is 400x600 with character center at (200, 300)
+	# Use fixed scale that matches character proportions independent of zoom
+	var mouse_2d = mouse_relative_screen * 0.5  # Fixed scale for character coordinate space
 	
-	# Calculate relative mouse position in screen space
-	var mouse_relative_screen = mouse_screen - character_screen
+	# COORDINATE SYSTEM ALIGNMENT:
+	# The mouse_2d coordinates are relative to character center (0,0)
+	# This matches body_controller coordinate system where shoulders are relative to center
+	# No additional offset needed - the coordinate systems are already aligned
 	
-	# Convert screen space to character's 2D space with consistent scaling
-	var scale_factor = 0.35  
-	var mouse_2d = mouse_relative_screen * scale_factor
+	# DEBUG: Print coordinate conversion chain (temporarily re-enabled for tuning)
+	if Input.is_action_pressed("ui_accept"):  # Only when spacebar held
+		print("[COORD_DEBUG] Mouse screen: %s | Viewport center: %s | Mouse 2D: %s | Scale: 0.5" % [
+			mouse_screen, viewport_center, mouse_2d
+		])
+		
+		# Also print what this will become as an arm target
+		if get_parent() and get_parent().body_controller:
+			var left_shoulder = get_parent().body_controller.get_shoulder_pos(true)
+			var right_shoulder = get_parent().body_controller.get_shoulder_pos(false)
+			print("[COORD_DEBUG] Left shoulder: %s | Right shoulder: %s" % [left_shoulder, right_shoulder])
+			print("[COORD_DEBUG] Mouse target would be: %s (relative to character center)" % mouse_2d)
 	
-	# REMOVED: No coordinate flipping - let's see what happens naturally
 	return mouse_2d
 
 func handle_mouse_chording(left_active: bool, right_active: bool, character_position: Vector2):

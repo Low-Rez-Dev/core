@@ -1,0 +1,36 @@
+[gd_scene load_steps=3 format=3 uid="uid://dmp1xnv2w6s2d"]
+
+[ext_resource type="Script" path="res://solipsistic_world.gd" id="1_xyz123"]
+[ext_resource type="Script" path="res://solipsistic_player.gd" id="2_abc456"]
+
+[node name="Main2D" type="Node2D"]
+
+[node name="SolipsisticWorld" type="Node" parent="."]
+script = ExtResource("1_xyz123")
+
+[node name="BackgroundLayer" type="CanvasLayer" parent="SolipsisticWorld"]
+layer = -10
+
+[node name="EntityLayers" type="CanvasLayer" parent="SolipsisticWorld"]
+layer = 0
+
+[node name="Player" type="Node2D" parent="SolipsisticWorld/EntityLayers"]
+script = ExtResource("2_abc456")
+primary_color = Color(0.2, 0.6, 1, 1)
+secondary_color = Color(0.8, 0.9, 1, 1)
+outline_color = Color(0.1, 0.3, 0.8, 1)
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="OrientationDisplay" type="Label" parent="UILayer"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 300.0
+offset_bottom = 150.0
+text = "Observer Facing: EAST
+Movement Axis: X-axis
+Depth Axis: Z-axis
+Consciousness: 0, 0
+Layer: 0
+Manifested Entities: 0"

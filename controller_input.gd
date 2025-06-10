@@ -33,9 +33,9 @@ func update_input(delta: float, character_position: Vector2):
 			Input.get_axis("left_stick_left", "left_stick_right"),
 			Input.get_axis("left_stick_up", "left_stick_down")
 		)
-		# DEBUG: Print controller movement
-		if movement_direction != Vector2.ZERO:
-			print("🎮 Controller movement: %s" % movement_direction)
+		# DEBUG: Print controller movement (commented out to reduce spam)
+		# if movement_direction != Vector2.ZERO:
+		# 	print("🎮 Controller movement: %s" % movement_direction)
 	else:
 		movement_direction = Vector2.ZERO
 	

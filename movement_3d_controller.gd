@@ -1,8 +1,8 @@
 extends Node
 class_name Movement3DController
 
-@export var running_speed_ms = 4.0
-@export var walking_speed_ms = 1.5
+@export var running_speed_ms = 60.0  # Much faster for playable movement  
+@export var walking_speed_ms = 30.0  # Much faster for playable movement
 @export var snap_to_grid = true
 @export var grid_size = 1.0
 
@@ -69,7 +69,7 @@ func update_movement(delta):
 		
 		can_rotate = false
 		orientation_changed.emit(current_orientation)
-		print("🧭 Now facing %s" % get_orientation_name())
+		print("🧭 Now facing %s" % get_orientation_name())  # Keep orientation changes
 	
 	# Handle A/D movement along facing direction
 	var is_running = Input.is_key_pressed(KEY_SHIFT)
@@ -82,10 +82,10 @@ func update_movement(delta):
 		var movement_vector: Vector3
 		if movement_2d.x < 0:  # A key - move backward along facing axis
 			movement_vector = movement_dirs.backward * abs(movement_2d.x) * speed_per_frame
-			print("🚶 Moving BACKWARD from %s" % get_orientation_name())
+			# Reduced verbose movement logging
 		else:  # D key - move forward along facing axis  
 			movement_vector = movement_dirs.forward * movement_2d.x * speed_per_frame
-			print("🚶 Moving FORWARD toward %s" % get_orientation_name())
+			# Reduced verbose movement logging
 		
 		velocity_3d.x = movement_vector.x
 		velocity_3d.z = movement_vector.z
@@ -95,10 +95,16 @@ func update_movement(delta):
 		velocity_3d.x = move_toward(velocity_3d.x, 0, decel_speed)
 		velocity_3d.z = move_toward(velocity_3d.z, 0, decel_speed)
 	
-	# Apply movement
-	target_node.position.x += velocity_3d.x
-	target_node.position.z += velocity_3d.z
-	target_node.position.y = 0.0
+	# Apply movement based on target node type
+	if target_node is CharacterBody3D:
+		# For CharacterBody3D, just store velocity - let physics system handle movement
+		# The character will copy velocity_3d to its velocity property
+		pass  # velocity_3d is already set above, character will use it
+	else:
+		# For other nodes, apply movement directly
+		target_node.position.x += velocity_3d.x
+		target_node.position.z += velocity_3d.z
+		target_node.position.y = 0.0
 	
 	if velocity_3d.length() > 0.01 or rotation_input != 0.0:
 		position_changed.emit(target_node.position)
