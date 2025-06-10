@@ -414,4 +414,4 @@
 - **Stance System**: L2/R2 controls with equipment-dependent availability
 - **Built-in Actions**: Throwing mechanics with prediction arcs
 - **Basic Combat**: Equipment-based stance targeting with force calculations
-- **Body Composition**: Layered anatomy system for realistic damage and harvesting
+- **Body Composition**: Layered anatomy system for realistic damage and harvesting 
