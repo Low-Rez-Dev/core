@@ -52,11 +52,11 @@ static func spawn_pine_trees(world: SolipsisticWorld):
 	# Forest cluster to the north
 	for i in range(15):
 		var tree = PineTree.new()
-		tree.tree_height = rng.randf_range(40.0, 80.0)
+		tree.tree_height = rng.randf_range(80.0, 120.0)  # 4-6 meters tall
 		
-		# Cluster around (-50, -100) with some spread
-		var cluster_center = Vector2(-50, -100)
-		var spread = 60.0
+		# Cluster around (-1000, -2000) with some spread (20 units = 1m scale)
+		var cluster_center = Vector2(-1000, -2000)  # 50m, 100m in old scale
+		var spread = 1200.0  # 60m spread
 		var spawn_pos = cluster_center + Vector2(
 			rng.randf_range(-spread, spread),
 			rng.randf_range(-spread, spread)
@@ -65,28 +65,28 @@ static func spawn_pine_trees(world: SolipsisticWorld):
 		world.spawn_entity_direct(tree, spawn_pos, 0)
 		tree_count += 1
 	
-	# Scattered trees around the starting area
+	# Scattered trees around the starting area (converted to 20 units = 1m scale)
 	var scatter_positions = [
-		Vector2(30, 25),   # NE of player
-		Vector2(-40, 30),  # NW of player  
-		Vector2(60, -20),  # SE of player
-		Vector2(-25, -15), # SW of player
-		Vector2(80, 40),   # Far east
-		Vector2(-70, -30), # Far west
-		Vector2(20, -60),  # Far south
-		Vector2(-10, 70),  # Far north
-		Vector2(120, 10),  # Very far east
-		Vector2(-90, 50),  # Very far west
+		Vector2(600, 500),    # NE of player (30m, 25m)
+		Vector2(-800, 600),   # NW of player (-40m, 30m)
+		Vector2(1200, -400),  # SE of player (60m, -20m)
+		Vector2(-500, -300),  # SW of player (-25m, -15m)
+		Vector2(1600, 800),   # Far east (80m, 40m)
+		Vector2(-1400, -600), # Far west (-70m, -30m)
+		Vector2(400, -1200),  # Far south (20m, -60m)
+		Vector2(-200, 1400),  # Far north (-10m, 70m)
+		Vector2(2400, 200),   # Very far east (120m, 10m)
+		Vector2(-1800, 1000), # Very far west (-90m, 50m)
 	]
 	
 	for pos in scatter_positions:
 		var tree = PineTree.new()
-		tree.tree_height = rng.randf_range(45.0, 75.0)
+		tree.tree_height = rng.randf_range(90.0, 110.0)  # 4.5-5.5 meters
 		
 		# Add some random offset for natural placement
 		var final_pos = pos + Vector2(
-			rng.randf_range(-10, 10),
-			rng.randf_range(-10, 10)
+			rng.randf_range(-200, 200),  # ±10m random offset
+			rng.randf_range(-200, 200)
 		)
 		
 		world.spawn_entity_direct(tree, final_pos, 0)
@@ -95,10 +95,10 @@ static func spawn_pine_trees(world: SolipsisticWorld):
 	# Small grove to the east
 	for i in range(8):
 		var tree = PineTree.new()
-		tree.tree_height = rng.randf_range(35.0, 65.0)
+		tree.tree_height = rng.randf_range(70.0, 130.0)  # 3.5-6.5 meters
 		
-		var grove_center = Vector2(150, -40)
-		var grove_spread = 30.0
+		var grove_center = Vector2(3000, -800)  # 150m, -40m
+		var grove_spread = 600.0  # 30m spread
 		var spawn_pos = grove_center + Vector2(
 			rng.randf_range(-grove_spread, grove_spread),
 			rng.randf_range(-grove_spread, grove_spread)

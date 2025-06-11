@@ -1,9 +1,9 @@
 extends ProceduralEntity
 class_name PineTree
 
-# Tree visual properties
-@export var tree_height: float = 60.0
-@export var trunk_width: float = 8.0
+# Tree visual properties (20 units = 1 meter scale)
+@export var tree_height: float = 100.0  # 100 units = 5 meters tall
+@export var trunk_width: float = 16.0   # 16 units = 0.8 meters wide
 @export var canopy_layers: int = 4
 
 func _ready():
@@ -56,7 +56,7 @@ func calculate_side_view_position() -> Vector2:
 	var screen_center = coords.CONSCIOUSNESS_CENTER
 	
 	# Check if tree is close enough to the current cross-section to be visible
-	var cross_section_tolerance = 5.0  # Only show trees within 5 units of the cross-section plane
+	var cross_section_tolerance = 10.0  # Only show trees within 10 units (0.5 meters) of the cross-section plane
 	var horizontal_distance: float
 	var depth_distance: float
 	
@@ -87,10 +87,16 @@ func calculate_side_view_position() -> Vector2:
 	var distance_from_player = abs(horizontal_distance)
 	var perspective_scale = calculate_perspective_scale(distance_from_player)
 	
-	# Calculate screen position with perspective
+	# Get the same eye level that terrain renderer uses for consistency
+	var terrain_renderer = get_tree().get_first_node_in_group("TerrainRenderer")
 	var viewport_size = get_viewport().get_visible_rect().size
-	var horizon_y = viewport_size.y * 0.7  # Same as terrain renderer
-	var player_eye_level = horizon_y - 50   # Same as terrain renderer
+	var player_eye_level: float
+	
+	if terrain_renderer and terrain_renderer.has_method("calculate_dynamic_eye_level"):
+		player_eye_level = terrain_renderer.calculate_dynamic_eye_level(viewport_size)
+	else:
+		# Fallback if terrain renderer not found
+		player_eye_level = viewport_size.y * 0.85
 	
 	var horizontal_scale = 3.0  # Same scale as terrain renderer
 	var vertical_scale = 2.0    # Same scale as terrain renderer

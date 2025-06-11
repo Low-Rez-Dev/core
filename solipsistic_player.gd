@@ -1,14 +1,14 @@
 extends ProceduralEntity
 class_name SolipsisticPlayer
 
-@export var movement_speed: float = 4.0  # 4 m/s walking speed (realistic human)
+@export var movement_speed: float = 80.0  # 80 units/sec = 4 m/s walking speed
 @export var can_change_z_layers: bool = true
 
-# Physics constants (realistic for 1 unit = 1 meter)
-@export var gravity_strength: float = 9.8   # 9.8 m/s² (Earth gravity)
-@export var jump_force: float = 3.5        # 3.5 m/s upward (gives ~0.6m jump height)
-@export var max_fall_speed: float = 15.0   # 15 m/s terminal velocity
-@export var ground_snap_distance: float = 0.1  # 10cm snap distance
+# Physics constants (20 units = 1 meter scale)
+@export var gravity_strength: float = 196.0   # 196 units/s² = 9.8 m/s² (Earth gravity)
+@export var jump_force: float = 70.0         # 70 units/s = 3.5 m/s upward (gives ~0.6m jump)
+@export var max_fall_speed: float = 300.0    # 300 units/s = 15 m/s terminal velocity
+@export var ground_snap_distance: float = 2.0  # 2 units = 10cm snap distance
 
 # Input state
 var move_input: float = 0.0
@@ -18,6 +18,10 @@ var depth_input: float = 0.0
 var vertical_velocity: float = 0.0  # Current Y velocity (positive = falling)
 var current_height: float = 0.0  # Current Y position above terrain
 var is_grounded: bool = false
+
+# Rotation state
+var rotation_cooldown: float = 0.0
+var rotation_cooldown_time: float = 0.3  # 300ms between rotations
 
 # IK data from ported body controller
 var left_arm_data: Dictionary = {}
@@ -68,6 +72,10 @@ func _ready():
 	initialize_physics_state()
 
 func _process(delta):
+	# Update rotation cooldown
+	if rotation_cooldown > 0:
+		rotation_cooldown -= delta
+	
 	handle_orientation_input()
 	handle_movement_input(delta)
 	handle_depth_input()
@@ -86,14 +94,21 @@ func set_input_handler(handler: SolipsisticInput):
 func handle_orientation_input():
 	"""Handle rotation of the observer's perspective"""
 	var coords = SolipsisticCoordinates
-	if Input.is_action_just_pressed("rotate_clockwise"):    # Q key
+	
+	# Only allow rotation if cooldown has expired
+	if rotation_cooldown > 0:
+		return
+		
+	if Input.is_key_pressed(KEY_Q):    # Q key - rotate clockwise
 		var new_orientation = (coords.current_orientation + 1) % 4
 		change_orientation(new_orientation)
-	elif Input.is_action_just_pressed("rotate_counter"):    # E key
+		rotation_cooldown = rotation_cooldown_time
+	elif Input.is_key_pressed(KEY_E):    # E key - rotate counter-clockwise  
 		var new_orientation = (coords.current_orientation - 1) % 4
 		if new_orientation < 0:
 			new_orientation = 3
 		change_orientation(new_orientation)
+		rotation_cooldown = rotation_cooldown_time
 
 func change_orientation(new_orientation: int):
 	"""Changes how the observer perceives spatial relationships"""
@@ -105,28 +120,26 @@ func change_orientation(new_orientation: int):
 	print("Observer now perceives reality facing: %s" % orientation_names[new_orientation])
 
 func handle_movement_input(delta):
-	"""Handle movement along the observer's current axis of perception"""
+	"""Handle side-view movement - A/D moves left/right across screen"""
 	if not input_handler:
 		return
 	
 	var movement_2d = input_handler.get_movement_direction()
-	move_input = movement_2d.x
+	move_input = movement_2d.x  # A/D keys for left/right screen movement
 	
 	if move_input != 0.0:
-		# Transform input to virtual world movement on the movement axis only
+		# In side-view, A/D should move along the horizontal cross-section axis
 		var coords = SolipsisticCoordinates
-		var transform = coords.orientation_transforms[coords.current_orientation]
-		var world_movement = transform.move * move_input * movement_speed * delta
+		var world_movement_delta = move_input * movement_speed * delta
 		
-		# Update consciousness position on movement axis only
-		# The depth axis position is managed separately by side-stepping
+		# Update consciousness position along the cross-section (horizontal screen) axis
 		match coords.current_orientation:
 			coords.Orientation.EAST, coords.Orientation.WEST:
-				# E-W is movement axis, update X coordinate only
-				coords.player_consciousness_pos.x += world_movement.x
+				# Cross-section is North-South, so A/D moves along Y axis
+				coords.player_consciousness_pos.y += world_movement_delta
 			coords.Orientation.NORTH, coords.Orientation.SOUTH:
-				# N-S is movement axis, update Y coordinate only  
-				coords.player_consciousness_pos.y += world_movement.y
+				# Cross-section is East-West, so A/D moves along X axis
+				coords.player_consciousness_pos.x += world_movement_delta
 		
 		coords.consciousness_moved.emit(coords.player_consciousness_pos)
 
@@ -210,9 +223,28 @@ func apply_gravity_and_physics(delta):
 	# Get terrain height at current horizontal position
 	var terrain_height = solipsistic_world.get_terrain_height_at(world_pos)
 	
-	# Debug terrain height fetching
-	if Engine.get_process_frames() % 60 == 0:  # Every second
-		print("DEBUG: pos=%s, terrain_height=%.3f, current_height=%.3f" % [world_pos, terrain_height, current_height])
+	# Get what the visual terrain shows at this position for comparison
+	var visual_terrain_height = 0.0
+	var terrain_renderer = get_tree().get_first_node_in_group("TerrainRenderer")
+	if terrain_renderer and terrain_renderer.terrain_layers.has("interactive"):
+		var visual_points = terrain_renderer.terrain_layers["interactive"]
+		if visual_points.size() > 10:
+			# Find the visual terrain height closest to player position (x=0 in relative coords)
+			var min_distance = INF
+			for point in visual_points:
+				var distance = abs(point.x)
+				if distance < min_distance:
+					min_distance = distance
+					visual_terrain_height = point.y
+	
+	# Debug terrain height comparison (controlled timing)
+	if SolipsisticCoordinates.should_debug_now(delta):  # Use delta to track time properly
+		SolipsisticCoordinates.debug_print("terrain", "🚧 TERRAIN MISMATCH DEBUG:")
+		SolipsisticCoordinates.debug_print("terrain", "   player_world_pos: %s" % world_pos)
+		SolipsisticCoordinates.debug_print("terrain", "   physics_terrain_height: %.3f" % terrain_height)
+		SolipsisticCoordinates.debug_print("terrain", "   visual_terrain_height: %.3f" % visual_terrain_height)
+		SolipsisticCoordinates.debug_print("terrain", "   HEIGHT DIFFERENCE: %.3f" % (terrain_height - visual_terrain_height))
+		SolipsisticCoordinates.debug_print("terrain", "   player_current_height: %.3f" % current_height)
 	
 	# CRITICAL DEBUG: If terrain height is 0.0, something is wrong
 	if terrain_height == 0.0 and world_pos.distance_to(Vector2.ZERO) < 0.1:

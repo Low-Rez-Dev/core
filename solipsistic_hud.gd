@@ -6,6 +6,11 @@ var coordinate_label: Label
 var physics_label: Label
 var orientation_label: Label
 var controls_label: Label
+var fps_label: Label
+
+# FPS tracking
+var fps_counter: float = 0.0
+var fps_update_timer: float = 0.0
 
 func _ready():
 	# Set up HUD layout
@@ -59,8 +64,25 @@ func create_hud_elements():
 	controls_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	controls_label.text = "CONTROLS:\nWASD - Move\nQ/E - Rotate View\nR/F - Depth Step\nSPACE - Jump"
 	add_child(controls_label)
+	
+	# FPS display (top-right)
+	fps_label = Label.new()
+	fps_label.position = Vector2(get_viewport().get_visible_rect().size.x - 120, 10)
+	fps_label.size = Vector2(100, 40)
+	fps_label.add_theme_color_override("font_color", Color.GREEN)
+	fps_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	fps_label.add_theme_constant_override("shadow_offset_x", 1)
+	fps_label.add_theme_constant_override("shadow_offset_y", 1)
+	fps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	add_child(fps_label)
 
 func _process(delta):
+	# Update FPS counter every 0.5 seconds
+	fps_update_timer += delta
+	if fps_update_timer >= 0.5:
+		fps_counter = Engine.get_frames_per_second()
+		fps_update_timer = 0.0
+	
 	update_hud_displays()
 
 func update_hud_displays():
@@ -95,6 +117,16 @@ func update_hud_displays():
 	# Update orientation display
 	var orientation_names = ["EAST →", "SOUTH ↓", "WEST ←", "NORTH ↑"]
 	orientation_label.text = "PERSPECTIVE:\n%s" % orientation_names[coords.current_orientation]
+	
+	# Update FPS display with color coding
+	var fps_color = Color.GREEN
+	if fps_counter < 60:
+		fps_color = Color.YELLOW
+	if fps_counter < 30:
+		fps_color = Color.RED
+	
+	fps_label.add_theme_color_override("font_color", fps_color)
+	fps_label.text = "FPS: %.0f" % fps_counter
 
 func get_orientation_arrow(orientation: int) -> String:
 	"""Get directional arrow for current orientation"""
