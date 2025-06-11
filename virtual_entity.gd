@@ -30,13 +30,14 @@ func _exit_tree():
 func update_manifestation():
 	"""Updates whether this entity exists in the observer's reality"""
 	# Calculate distance from player consciousness
-	var virtual_relative = virtual_position - SolipsisticCoordinates.player_consciousness_pos
-	var z_distance = abs(virtual_z_layer - SolipsisticCoordinates.player_z_layer)
+	var coords = SolipsisticCoordinates
+	var virtual_relative = virtual_position - coords.player_consciousness_pos
+	var z_distance = abs(virtual_z_layer - coords.player_z_layer)
 	
 	# Fast distance check (avoid sqrt for performance)
 	var distance_squared = virtual_relative.length_squared() + (z_distance * z_distance * 100)
 	
-	if distance_squared <= SolipsisticCoordinates.perception_radius_squared:
+	if distance_squared <= coords.perception_radius_squared:
 		if not is_manifested:
 			manifest_in_reality()
 		update_subjective_position()
@@ -69,8 +70,10 @@ func update_subjective_position():
 	if not is_manifested:
 		return
 	
-	# Get relative virtual position
-	var virtual_relative = virtual_position - SolipsisticCoordinates.player_consciousness_pos
+	# Get relative virtual position using the lane-aware consciousness position
+	var coords = SolipsisticCoordinates
+	var consciousness_lane_pos = coords.get_current_lane_position()
+	var virtual_relative = virtual_position - consciousness_lane_pos
 	
 	# Transform to screen coordinates based on observer's orientation
 	var screen_relative = virtual_to_screen_coords(virtual_relative)
@@ -79,18 +82,19 @@ func update_subjective_position():
 	apply_depth_perception_effects()
 	
 	# Set final position relative to consciousness center
-	position = SolipsisticCoordinates.CONSCIOUSNESS_CENTER + screen_relative
+	position = coords.CONSCIOUSNESS_CENTER + screen_relative
 
 func virtual_to_screen_coords(virtual_pos: Vector2) -> Vector2:
 	"""Converts virtual world coordinates to observer's screen coordinates"""
-	match SolipsisticCoordinates.current_orientation:
-		SolipsisticCoordinates.Orientation.EAST:   # X=horizontal, Z=vertical  
+	var coords = SolipsisticCoordinates
+	match coords.current_orientation:
+		coords.Orientation.EAST:   # X=horizontal, Z=vertical  
 			return Vector2(virtual_pos.x, virtual_pos.y)
-		SolipsisticCoordinates.Orientation.SOUTH:  # Z=horizontal, X=vertical
+		coords.Orientation.SOUTH:  # Z=horizontal, X=vertical
 			return Vector2(-virtual_pos.y, virtual_pos.x)  
-		SolipsisticCoordinates.Orientation.WEST:   # -X=horizontal, -Z=vertical
+		coords.Orientation.WEST:   # -X=horizontal, -Z=vertical
 			return Vector2(-virtual_pos.x, -virtual_pos.y)
-		SolipsisticCoordinates.Orientation.NORTH:  # -Z=horizontal, -X=vertical  
+		coords.Orientation.NORTH:  # -Z=horizontal, -X=vertical  
 			return Vector2(virtual_pos.y, -virtual_pos.x)
 		_:
 			return virtual_pos

@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://dmp1xnv2w6s2d"]
+[gd_scene load_steps=4 format=3 uid="uid://dmp1xnv2w6s2d"]
 
 [ext_resource type="Script" path="res://solipsistic_world.gd" id="1_xyz123"]
 [ext_resource type="Script" path="res://solipsistic_player.gd" id="2_abc456"]
+[ext_resource type="Script" path="res://solipsistic_hud.gd" id="3_def789"]
 
 [node name="Main2D" type="Node2D"]
 
@@ -23,14 +24,10 @@ outline_color = Color(0.1, 0.3, 0.8, 1)
 [node name="UILayer" type="CanvasLayer" parent="."]
 layer = 10
 
-[node name="OrientationDisplay" type="Label" parent="UILayer"]
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 300.0
-offset_bottom = 150.0
-text = "Observer Facing: EAST
-Movement Axis: X-axis
-Depth Axis: Z-axis
-Consciousness: 0, 0
-Layer: 0
-Manifested Entities: 0"
+[node name="SolipsisticHUD" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("3_def789")

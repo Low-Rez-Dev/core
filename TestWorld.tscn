@@ -1,0 +1,4 @@
+[gd_scene format=3 uid="uid://bpcmtdhknej4b"]
+
+[node name="GameWorld3D" type="Node3D"]
+metadata/_custom_type_script = "uid://dsoafko1omcs8"

@@ -17,6 +17,8 @@ func _draw():
 			draw_building()
 		"tree":
 			draw_tree()
+		"pine_tree":
+			draw_pine_tree()
 		_:
 			draw_generic_entity()
 
@@ -101,7 +103,10 @@ func draw_enemy():
 		# Breathing animation
 		var breath_scale = 1.0 + sin(time * 2) * 0.1
 		var breath_rect = Rect2(-size/6, -size/8, size/3, size/4)
-		breath_rect = breath_rect * breath_scale
+		# Scale the rect by modifying position and size
+		var scaled_pos = breath_rect.position * breath_scale
+		var scaled_size = breath_rect.size * breath_scale
+		breath_rect = Rect2(scaled_pos, scaled_size)
 		draw_rect(breath_rect, entity.secondary_color, true)
 
 func draw_building():
@@ -195,6 +200,62 @@ func draw_generic_entity():
 		var start = points[i]
 		var end = points[(i + 1) % points.size()]
 		draw_line(start, end, entity.outline_color, entity.outline_width)
+
+func draw_pine_tree():
+	"""Draw a pine tree with layered triangular canopy"""
+	var size = entity.entity_size
+	var time = entity.animation_time
+	
+	# Get tree properties from entity if it has them
+	var tree_height = size
+	var trunk_width = size / 8.0
+	var canopy_layers = 4
+	
+	if entity.has_method("get_tree_properties"):
+		var props = entity.get_tree_properties()
+		tree_height = props.get("height", size)
+		trunk_width = props.get("trunk_width", size / 8.0)
+		canopy_layers = props.get("canopy_layers", 4)
+	
+	var half_size = tree_height / 2
+	
+	# Subtle wind sway
+	var wind_sway = sin(time * 0.5) * 1.0
+	
+	# Draw trunk
+	var trunk_color = Color(0.6, 0.3, 0.1)  # Brown
+	var trunk_height = tree_height * 0.3
+	var trunk_rect = Rect2(
+		Vector2(-trunk_width/2 + wind_sway * 0.2, half_size - trunk_height),
+		Vector2(trunk_width, trunk_height)
+	)
+	draw_rect(trunk_rect, trunk_color)
+	
+	# Draw canopy layers (triangular sections)
+	var layer_height = (tree_height * 0.8) / canopy_layers
+	
+	for i in range(canopy_layers):
+		var layer_y = half_size - trunk_height - (i * layer_height * 0.7)  # Overlap layers
+		var layer_width = trunk_width + (canopy_layers - i) * 12.0
+		
+		# Add wind sway to each layer
+		var layer_sway = wind_sway * (1.0 + i * 0.3)  # Upper layers sway more
+		
+		# Create triangle points for this canopy layer
+		var triangle_points = PackedVector2Array([
+			Vector2(layer_sway, layer_y - layer_height),        # Top point
+			Vector2(-layer_width/2 + layer_sway, layer_y),      # Bottom left
+			Vector2(layer_width/2 + layer_sway, layer_y)        # Bottom right
+		])
+		
+		# Alternate colors for depth
+		var layer_color = entity.primary_color if i % 2 == 0 else entity.secondary_color
+		draw_colored_polygon(triangle_points, layer_color)
+		
+		# Add outline
+		for j in range(triangle_points.size()):
+			var next_j = (j + 1) % triangle_points.size()
+			draw_line(triangle_points[j], triangle_points[next_j], entity.outline_color, 1.0)
 
 func _process(delta):
 	queue_redraw()

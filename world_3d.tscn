@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://chw2betdxyqip"]
+
+[ext_resource type="Script" path="res://world_3d_setup.gd" id="1_f718j"]
+
+[node name="GameWorld3D" type="Node3D"]
+script = ExtResource("1_f718j")
+metadata/_custom_type_script = "uid://dsoafko1omcs8"
