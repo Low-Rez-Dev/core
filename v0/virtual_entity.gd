@@ -86,18 +86,21 @@ func update_subjective_position():
 
 func virtual_to_screen_coords(virtual_pos: Vector2) -> Vector2:
 	"""Converts virtual world coordinates to observer's screen coordinates"""
+	# virtual_pos.x = East/West world position
+	# virtual_pos.y = North/South world position  
 	var coords = SolipsisticCoordinates
+	var scale = 20.0  # 20 pixels per meter
 	match coords.current_orientation:
-		coords.Orientation.EAST:   # X=horizontal, Z=vertical  
-			return Vector2(virtual_pos.x, virtual_pos.y)
-		coords.Orientation.SOUTH:  # Z=horizontal, X=vertical
-			return Vector2(-virtual_pos.y, virtual_pos.x)  
-		coords.Orientation.WEST:   # -X=horizontal, -Z=vertical
-			return Vector2(-virtual_pos.x, -virtual_pos.y)
-		coords.Orientation.NORTH:  # -Z=horizontal, -X=vertical  
-			return Vector2(virtual_pos.y, -virtual_pos.x)
+		coords.Orientation.EAST:   # Looking East: East/West is left/right, North/South is depth
+			return Vector2(virtual_pos.x * scale, 0)  # East/West becomes horizontal movement
+		coords.Orientation.SOUTH:  # Looking South: North/South is left/right, East/West is depth
+			return Vector2(-virtual_pos.y * scale, 0)  # North/South becomes horizontal (flipped)
+		coords.Orientation.WEST:   # Looking West: East/West is left/right (flipped), North/South is depth  
+			return Vector2(-virtual_pos.x * scale, 0)  # East/West becomes horizontal (flipped)
+		coords.Orientation.NORTH:  # Looking North: North/South is left/right, East/West is depth
+			return Vector2(virtual_pos.y * scale, 0)   # North/South becomes horizontal
 		_:
-			return virtual_pos
+			return virtual_pos * scale
 
 func apply_depth_perception_effects():
 	"""Applies visual effects based on depth layer distance from observer"""

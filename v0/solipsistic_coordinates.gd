@@ -1,16 +1,18 @@
 extends Node
 
 # Singleton for coordinate system
-var player_consciousness_pos: Vector2 = Vector2.ZERO
+# Vector2 represents (X=East/West, Z=North/South) in world coordinates
+var player_consciousness_pos: Vector2 = Vector2.ZERO  # Vector2(x=East/West, y=North/South)
+var player_height: float = 0.0  # Y=Height/Altitude (handled separately)
 var player_z_layer: int = 0
 
 # MASTER DEBUG CONTROL - Set to false to disable ALL debug messages
-var DEBUG_ENABLED: bool = false
-var DEBUG_TERRAIN: bool = false
-var DEBUG_CAMERA: bool = false
+var DEBUG_ENABLED: bool = true
+var DEBUG_TERRAIN: bool = true
+var DEBUG_CAMERA: bool = true
 var DEBUG_MOVEMENT: bool = false
 var DEBUG_ROTATION: bool = false
-var DEBUG_PHYSICS: bool = false
+var DEBUG_PHYSICS: bool = true
 
 # Debug timing control
 var debug_timer: float = 0.0
@@ -36,12 +38,13 @@ const CONSCIOUSNESS_CENTER: Vector2 = Vector2(320, 240)  # Screen center (640x48
 enum Orientation { EAST, SOUTH, WEST, NORTH }
 var current_orientation: int = Orientation.EAST
 
-# Coordinate transformation matrices for different orientations
+# Coordinate transformation matrices for different orientations  
+# Vector2 represents (X=East/West, Z=North/South) - Y=height is handled separately
 var orientation_transforms = {
-	Orientation.EAST:  { "move": Vector2(1, 0), "depth": Vector2(0, 1) },   # X=move, Z=depth
-	Orientation.SOUTH: { "move": Vector2(0, -1), "depth": Vector2(1, 0) },  # Z=move, X=depth  
-	Orientation.WEST:  { "move": Vector2(-1, 0), "depth": Vector2(0, -1) }, # -X=move, -Z=depth
-	Orientation.NORTH: { "move": Vector2(0, 1), "depth": Vector2(-1, 0) }   # -Z=move, -X=depth
+	Orientation.EAST:  { "move": Vector2(1, 0), "depth": Vector2(0, 1) },   # X=move (E/W), Z=depth (N/S)
+	Orientation.SOUTH: { "move": Vector2(0, -1), "depth": Vector2(1, 0) },  # Z=move (S/N), X=depth (E/W)  
+	Orientation.WEST:  { "move": Vector2(-1, 0), "depth": Vector2(0, -1) }, # -X=move (W/E), -Z=depth (S/N)
+	Orientation.NORTH: { "move": Vector2(0, 1), "depth": Vector2(-1, 0) }   # Z=move (N/S), -X=depth (W/E)
 }
 
 # Signals for reality shifts
@@ -85,7 +88,7 @@ func start_side_step(direction: int):
 			# E-W is depth axis  
 			step_vector = Vector2(direction, 0)
 	
-	side_step_target_pos = get_current_lane_position() + step_vector * 20.0  # 20 units = 1 meter step
+	side_step_target_pos = get_current_lane_position() + step_vector * 1.0  # 1 meter step
 	side_step_started.emit(direction)
 
 func update_side_step(delta: float):
@@ -115,24 +118,24 @@ func update_side_step(delta: float):
 			player_consciousness_pos.x = animated_pos.x
 
 # Universal coordinate transform system
-func world_to_screen(world_pos: Vector2, player_screen_pos: Vector2, vertical_scale: float = 2.0) -> Vector2:
+func world_to_screen(world_pos: Vector2, player_screen_pos: Vector2, scale: float = 20.0) -> Vector2:
 	"""Transform world coordinates to screen coordinates relative to player"""
 	# Calculate offset from player in world space
 	var world_offset = world_pos - player_consciousness_pos
 	
-	# Convert to screen offset (basic scale, no perspective yet)
-	var screen_offset = Vector2(world_offset.x * 3.0, -world_offset.y * vertical_scale)
+	# Convert to screen offset with consistent scale (20 pixels per meter)
+	var screen_offset = Vector2(world_offset.x * scale, -world_offset.y * scale)
 	
 	# Return screen position relative to player
 	return player_screen_pos + screen_offset
 
-func screen_to_world(screen_pos: Vector2, player_screen_pos: Vector2, vertical_scale: float = 2.0) -> Vector2:
+func screen_to_world(screen_pos: Vector2, player_screen_pos: Vector2, scale: float = 20.0) -> Vector2:
 	"""Transform screen coordinates to world coordinates relative to player"""
 	# Calculate screen offset from player
 	var screen_offset = screen_pos - player_screen_pos
 	
-	# Convert to world offset
-	var world_offset = Vector2(screen_offset.x / 3.0, -screen_offset.y / vertical_scale)
+	# Convert to world offset with consistent scale (20 pixels per meter)
+	var world_offset = Vector2(screen_offset.x / scale, -screen_offset.y / scale)
 	
 	# Return world position
 	return player_consciousness_pos + world_offset

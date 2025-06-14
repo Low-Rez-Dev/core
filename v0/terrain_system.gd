@@ -33,8 +33,8 @@ func generate_initial_terrain():
 	print("🗺️ Generating terrain grid...")
 	
 	# Generate terrain in a larger area to handle player movement
-	for x in range(-1200, 1201):  # 2400x2400 grid around origin (600m x 600m)
-		for z in range(-1200, 1201):
+	for x in range(-200, 201):  # 400x400 grid around origin (100m x 100m at 0.25m resolution)
+		for z in range(-200, 201):
 			var world_pos = Vector2(x * grid_resolution, z * grid_resolution)
 			var height = calculate_terrain_height(world_pos)
 			height_grid[Vector2i(x, z)] = height
@@ -63,26 +63,27 @@ func generate_initial_terrain():
 
 func calculate_terrain_height(world_pos: Vector2) -> float:
 	"""Calculate procedural terrain height at world position"""
-	# Convert to proper scale for noise sampling (20 units = 1 meter)
-	var sample_x = world_pos.x / 20.0  # Convert to meters for noise sampling
-	var sample_y = world_pos.y / 20.0
+	# World coordinates are already in meters (1:1 scale)
+	var sample_x = world_pos.x
+	var sample_y = world_pos.y
 	
 	var height = base_height
 	
-	# Large mountains (very low frequency, high amplitude)
-	height += noise.get_noise_2d(sample_x * 0.01, sample_y * 0.01) * 2000.0  # 100m mountains
+	# Much gentler terrain for movement testing
+	# Large hills (very low frequency, moderate amplitude)
+	height += noise.get_noise_2d(sample_x * 0.01, sample_y * 0.01) * 20.0   # 20m hills
 	
-	# Rolling hills (medium frequency, medium amplitude) 
-	height += noise.get_noise_2d(sample_x * 0.05, sample_y * 0.05) * 800.0   # 40m hills
+	# Rolling terrain (medium frequency, small amplitude) 
+	height += noise.get_noise_2d(sample_x * 0.05, sample_y * 0.05) * 8.0    # 8m rolls
 	
-	# Smaller hills (higher frequency, lower amplitude)
-	height += noise.get_noise_2d(sample_x * 0.1, sample_y * 0.1) * 400.0     # 20m hills
+	# Small undulations (higher frequency, tiny amplitude)
+	height += noise.get_noise_2d(sample_x * 0.1, sample_y * 0.1) * 3.0      # 3m undulations
 	
-	# Fine detail (high frequency, small amplitude)
-	height += noise.get_noise_2d(sample_x * 0.3, sample_y * 0.3) * 100.0     # 5m detail
+	# Fine surface detail
+	height += noise.get_noise_2d(sample_x * 0.3, sample_y * 0.3) * 1.0      # 1m detail
 	
-	# Very fine surface detail
-	height += noise.get_noise_2d(sample_x * 1.0, sample_y * 1.0) * 40.0      # 2m surface variation
+	# Very fine surface texture
+	height += noise.get_noise_2d(sample_x * 1.0, sample_y * 1.0) * 0.5      # 0.5m texture
 	
 	return height
 

@@ -1,4 +1,6 @@
-[gd_scene format=3 uid="uid://bpcmtdhknej4b"]
+[gd_scene load_steps=2 format=3 uid="uid://ceebyagudq2o3"]
 
-[node name="GameWorld3D" type="Node3D"]
-metadata/_custom_type_script = "uid://dsoafko1omcs8"
+[ext_resource type="Script" uid="uid://dokhy3yw8xxm2" path="res://coordinate_system.gd" id="1_7c1qw"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_7c1qw")

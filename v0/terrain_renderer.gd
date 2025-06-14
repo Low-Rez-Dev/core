@@ -34,17 +34,16 @@ func _process(delta):
 func update_cross_section():
 	"""Update terrain cross-section based on current player position and orientation"""
 	var coords = SolipsisticCoordinates
-	var observer_pos = coords.player_consciousness_pos
+	var player_world_pos = coords.player_consciousness_pos
 	var orientation = coords.current_orientation
 	
 	# Calculate terrain width based on screen width
 	var viewport_size = get_viewport().get_visible_rect().size
-	var screen_center = SolipsisticCoordinates.CONSCIOUSNESS_CENTER
-	var horizontal_scale = 3.0  # Same scale used in draw function
+	var horizontal_scale = 3.0  # Scale used in draw function
 	var terrain_width = (viewport_size.x / horizontal_scale) + 50.0  # Extra padding for smooth edges
 	
-	# Get multiple terrain layers for depth visualization
-	terrain_layers = get_multi_layer_terrain(observer_pos, orientation, terrain_width)
+	# Get terrain layers for current world position
+	terrain_layers = get_multi_layer_terrain(player_world_pos, orientation, terrain_width)
 	
 	# Debug: Print some info about the cross-section
 	if terrain_layers.has("interactive") and terrain_layers["interactive"].size() > 0:
@@ -73,65 +72,66 @@ func calculate_perspective_scale(distance: float) -> float:
 	return max(min_scale, scale)
 
 func get_multi_layer_terrain(observer_pos: Vector2, orientation: int, width: float) -> Dictionary:
-	"""Get terrain for multiple depth layers with logarithmic LOD"""
+	"""Get terrain for multiple depth layers with fixed cross-section"""
 	var layers = {}
 	var coords = SolipsisticCoordinates
-	var current_lane = coords.get_current_lane_position()
 	
-	# Interactive layer (exact player position) - highest detail
-	var player_pos = coords.player_consciousness_pos  # Use exact position, not lane center
-	layers["interactive"] = terrain_system.get_terrain_cross_section_at_depth(player_pos, orientation, width, 0.0, 0.5)
+	# Use player's world position for terrain sampling
+	var player_world_pos = coords.player_consciousness_pos
+	layers["interactive"] = terrain_system.get_terrain_cross_section_at_depth(player_world_pos, orientation, width, 0.0, 0.5)
 	
 	# Background layers with logarithmic LOD grouping
 	layers["background"] = []
 	
-	# LOD Level 1: Layers 1-10 (individual layers, high detail)
-	for i in range(1, 11):
-		var depth_offset = float(i)
-		var bg_layer = terrain_system.get_terrain_cross_section_at_depth(player_pos, orientation, width, depth_offset, 0.5)
-		if bg_layer.size() > 0:
+	# TEMP DISABLED FOR DEBUGGING - Only show interactive layer
+	if false:  # Set to true to re-enable background layers
+		# LOD Level 1: Layers 1-10 (individual layers, high detail)
+		for i in range(1, 11):
+			var depth_offset = float(i)
+			var bg_layer = terrain_system.get_terrain_cross_section_at_depth(player_world_pos, orientation, width, depth_offset, 0.5)
+			if bg_layer.size() > 0:
+				layers["background"].append({
+					"points": bg_layer,
+					"depth": depth_offset,
+					"lod_level": 1
+				})
+		
+		# LOD Level 2: Layers 11-50 (grouped into 8 composite layers, medium detail)
+		for group in range(8):
+			var start_depth = 11 + group * 5  # Groups of 5 layers
+			var end_depth = start_depth + 4
+			var composite_layer = create_peak_composite_layer(player_world_pos, orientation, width, start_depth, end_depth, 2.5)  # 5x lower detail
+			if composite_layer.size() > 0:
+				layers["background"].append({
+					"points": composite_layer,
+					"depth": (start_depth + end_depth) / 2.0,  # Average depth
+					"lod_level": 2
+				})
+		
+		# LOD Level 3: Layers 51-250 (grouped into 8 composite layers, low detail)
+		for group in range(8):
+			var start_depth = 51 + group * 25  # Groups of 25 layers
+			var end_depth = start_depth + 24
+			var composite_layer = create_peak_composite_layer(player_world_pos, orientation, width, start_depth, end_depth, 12.5)  # 25x lower detail
+			if composite_layer.size() > 0:
+				layers["background"].append({
+					"points": composite_layer,
+					"depth": (start_depth + end_depth) / 2.0,
+					"lod_level": 3
+				})
+		
+		# LOD Level 4: Far mountains (layers 251-1000, very low detail)
+		var far_composite = create_peak_composite_layer(player_world_pos, orientation, width, 251, 1000, 62.5)  # Very low detail
+		if far_composite.size() > 0:
 			layers["background"].append({
-				"points": bg_layer,
-				"depth": depth_offset,
-				"lod_level": 1
+				"points": far_composite,
+				"depth": 625.0,  # Average depth
+				"lod_level": 4
 			})
-	
-	# LOD Level 2: Layers 11-50 (grouped into 8 composite layers, medium detail)
-	for group in range(8):
-		var start_depth = 11 + group * 5  # Groups of 5 layers
-		var end_depth = start_depth + 4
-		var composite_layer = create_peak_composite_layer(player_pos, orientation, width, start_depth, end_depth, 2.5)  # 5x lower detail
-		if composite_layer.size() > 0:
-			layers["background"].append({
-				"points": composite_layer,
-				"depth": (start_depth + end_depth) / 2.0,  # Average depth
-				"lod_level": 2
-			})
-	
-	# LOD Level 3: Layers 51-250 (grouped into 8 composite layers, low detail)
-	for group in range(8):
-		var start_depth = 51 + group * 25  # Groups of 25 layers
-		var end_depth = start_depth + 24
-		var composite_layer = create_peak_composite_layer(player_pos, orientation, width, start_depth, end_depth, 12.5)  # 25x lower detail
-		if composite_layer.size() > 0:
-			layers["background"].append({
-				"points": composite_layer,
-				"depth": (start_depth + end_depth) / 2.0,
-				"lod_level": 3
-			})
-	
-	# LOD Level 4: Far mountains (layers 251-1000, very low detail)
-	var far_composite = create_peak_composite_layer(player_pos, orientation, width, 251, 1000, 62.5)  # Very low detail
-	if far_composite.size() > 0:
-		layers["background"].append({
-			"points": far_composite,
-			"depth": 625.0,  # Average depth
-			"lod_level": 4
-		})
 	
 	return layers
 
-func create_composite_layer(current_lane: Vector2, orientation: int, width: float, start_depth: int, end_depth: int, step_size: float) -> PackedVector2Array:
+func create_composite_layer(player_pos: Vector2, orientation: int, width: float, start_depth: int, end_depth: int, step_size: float) -> PackedVector2Array:
 	"""Create a composite layer by averaging multiple depth layers"""
 	var composite_points = PackedVector2Array()
 	
@@ -145,7 +145,7 @@ func create_composite_layer(current_lane: Vector2, orientation: int, width: floa
 		
 		# Average heights across all layers in this group
 		for depth in range(start_depth, end_depth + 1):
-			var sample_pos = calculate_sample_position(current_lane, orientation, horizontal_offset, float(depth))
+			var sample_pos = calculate_sample_position(player_pos, orientation, horizontal_offset, float(depth))
 			var height = terrain_system.get_height_at_world_pos(sample_pos)
 			height_sum += height
 			valid_samples += 1
@@ -156,7 +156,7 @@ func create_composite_layer(current_lane: Vector2, orientation: int, width: floa
 	
 	return composite_points
 
-func create_peak_composite_layer(current_lane: Vector2, orientation: int, width: float, start_depth: int, end_depth: int, step_size: float) -> PackedVector2Array:
+func create_peak_composite_layer(player_pos: Vector2, orientation: int, width: float, start_depth: int, end_depth: int, step_size: float) -> PackedVector2Array:
 	"""Create a composite layer by keeping peak heights (LOD 3-4)"""
 	var composite_points = PackedVector2Array()
 	
@@ -169,7 +169,7 @@ func create_peak_composite_layer(current_lane: Vector2, orientation: int, width:
 		
 		# Find peak height across all layers in this group
 		for depth in range(start_depth, end_depth + 1):
-			var sample_pos = calculate_sample_position(current_lane, orientation, horizontal_offset, float(depth))
+			var sample_pos = calculate_sample_position(player_pos, orientation, horizontal_offset, float(depth))
 			var height = terrain_system.get_height_at_world_pos(sample_pos)
 			max_height = max(max_height, height)
 		
@@ -178,9 +178,9 @@ func create_peak_composite_layer(current_lane: Vector2, orientation: int, width:
 	
 	return composite_points
 
-func calculate_sample_position(current_lane: Vector2, orientation: int, horizontal_offset: float, depth_offset: float) -> Vector2:
+func calculate_sample_position(player_pos: Vector2, orientation: int, horizontal_offset: float, depth_offset: float) -> Vector2:
 	"""Calculate world position for a sample point"""
-	var sample_pos = current_lane
+	var sample_pos = player_pos
 	
 	# Apply depth offset
 	match orientation:
@@ -202,53 +202,18 @@ func calculate_sample_position(current_lane: Vector2, orientation: int, horizont
 	
 	return sample_pos
 
-func calculate_dynamic_eye_level(viewport_size: Vector2) -> float:
-	"""Calculate eye level to keep player FIXED at bottom of screen"""
-	var fixed_player_screen_y = viewport_size.y * 0.85  # Player ALWAYS at 85% down from top
-	
-	# Get the terrain height that the player is actually standing on
-	var coords = SolipsisticCoordinates  
-	var player_world_pos = coords.player_consciousness_pos
-	var terrain_height = 0.0
-	
-	if terrain_system:
-		terrain_height = terrain_system.get_height_at_world_pos(player_world_pos)
-	
-	# Get player's actual height above their terrain
-	var player_height_above_terrain = 0.0
+func get_camera_offset() -> Vector2:
+	"""Get camera offset to follow player"""
 	var player = get_tree().get_first_node_in_group("Player")
-	if player and player.has_method("get_current_height_above_terrain"):
-		player_height_above_terrain = player.get_current_height_above_terrain()
+	if not player:
+		return Vector2.ZERO
 	
-	# DEBUG: Log the height calculations (controlled timing)
-	if SolipsisticCoordinates.should_debug_now(0.0):  # Check if it's time for debug output
-		SolipsisticCoordinates.debug_print("camera", "🎥 CAMERA DEBUG:")
-		SolipsisticCoordinates.debug_print("camera", "   player_world_pos: %s" % player_world_pos)
-		SolipsisticCoordinates.debug_print("camera", "   terrain_height (visual): %.3f" % terrain_height)
-		SolipsisticCoordinates.debug_print("camera", "   player_height_above_terrain: %.3f" % player_height_above_terrain)
-		SolipsisticCoordinates.debug_print("camera", "   fixed_player_screen_y: %.1f" % fixed_player_screen_y)
-		SolipsisticCoordinates.debug_print("camera", "   viewport_size: %s" % viewport_size)
+	var viewport_size = get_viewport().get_visible_rect().size
+	var screen_center = Vector2(viewport_size.x * 0.5, viewport_size.y * 0.5)
 	
-	# Calculate total player height in world space
-	var player_total_height = terrain_height + player_height_above_terrain
-	
-	# Eye level = where player should be on screen - their total height in screen space
-	var calculated_eye_level = fixed_player_screen_y - (player_total_height * vertical_scale)
-	
-	# FORCE camera bounds to keep player locked in bottom area
-	var min_eye_level = viewport_size.y * 0.5   # Don't go above middle of screen
-	var max_eye_level = viewport_size.y * 1.2   # Can go slightly below screen for very high terrain
-	
-	var unclamped_eye_level = calculated_eye_level
-	calculated_eye_level = clamp(calculated_eye_level, min_eye_level, max_eye_level)
-	
-	# Only print this if we already decided to debug this frame  
-	if SolipsisticCoordinates.debug_timer == 0.0:  # Just reset, so we're debugging this frame
-		SolipsisticCoordinates.debug_print("camera", "   unclamped_eye_level: %.1f" % unclamped_eye_level)
-		SolipsisticCoordinates.debug_print("camera", "   calculated_eye_level: %.1f (clamped between %.1f and %.1f)" % [calculated_eye_level, min_eye_level, max_eye_level])
-		SolipsisticCoordinates.debug_print("camera", "   player_total_height: %.1f" % player_total_height)
-	
-	return calculated_eye_level
+	# Camera follows player position
+	var camera_offset = screen_center - player.position
+	return camera_offset
 
 func cull_hidden_layers(background_layers: Array, player_eye_level: float) -> Array:
 	"""Cull layers that are completely hidden by nearer layers"""
@@ -299,37 +264,33 @@ func cull_hidden_layers(background_layers: Array, player_eye_level: float) -> Ar
 	return visible_layers
 
 func draw_multi_layer_terrain():
-	"""Draw multiple terrain layers with depth"""
+	"""Draw multiple terrain layers with camera following player"""
 	var viewport_size = get_viewport().get_visible_rect().size
 	var horizon_y = viewport_size.y * 0.7
 	
-	# Calculate dynamic player eye level based on player height
-	var player_eye_level = calculate_dynamic_eye_level(viewport_size)
+	# Get camera offset from player position
+	var camera_offset = get_camera_offset()
 	
 	# Draw sky first
 	draw_sky(viewport_size, horizon_y)
 	
 	# Draw background layers first (furthest to nearest) with culling
 	if terrain_layers.has("background"):
-		var visible_layers = cull_hidden_layers(terrain_layers["background"], player_eye_level)
+		var visible_layers = cull_hidden_layers(terrain_layers["background"], viewport_size.y * 0.5)
 		for i in range(visible_layers.size() - 1, -1, -1):  # Reverse order
 			var layer = visible_layers[i]
-			draw_terrain_layer(layer["points"], layer["depth"], false, player_eye_level, layer["lod_level"])
+			draw_terrain_layer(layer["points"], layer["depth"], false, camera_offset, layer["lod_level"])
 	
 	# Draw interactive layer last (on top)
 	if terrain_layers.has("interactive"):
-		draw_terrain_layer(terrain_layers["interactive"], 0.0, true, player_eye_level, 1)
-	
-	# Draw player eye level reference
-	draw_line(Vector2(0, player_eye_level), Vector2(viewport_size.x, player_eye_level), Color.RED, 2.0)
+		draw_terrain_layer(terrain_layers["interactive"], 0.0, true, camera_offset, 1)
 	
 
-func draw_terrain_layer(points: PackedVector2Array, depth_offset: float, is_interactive: bool, player_eye_level: float, lod_level: int = 1):
-	"""Draw a single terrain layer"""
+func draw_terrain_layer(points: PackedVector2Array, depth_offset: float, is_interactive: bool, camera_offset: Vector2, lod_level: int = 1):
+	"""Draw a single terrain layer with camera following"""
 	if points.size() < 2:
 		return
 	
-	var screen_center = SolipsisticCoordinates.CONSCIOUSNESS_CENTER
 	var viewport_size = get_viewport().get_visible_rect().size
 	var screen_points = PackedVector2Array()
 	
@@ -337,7 +298,7 @@ func draw_terrain_layer(points: PackedVector2Array, depth_offset: float, is_inte
 	var depth_alpha = 1.0 - (depth_offset * 0.3)  # Further layers are more transparent
 	var depth_scale = 1.0 - (depth_offset * 0.1)   # Further layers slightly smaller
 	
-	# Convert terrain points to screen coordinates
+	# Convert terrain points to screen coordinates with camera offset
 	for point in points:
 		var distance_from_player = abs(point.x)
 		var perspective_scale = calculate_perspective_scale(distance_from_player) * depth_scale
@@ -345,9 +306,12 @@ func draw_terrain_layer(points: PackedVector2Array, depth_offset: float, is_inte
 		# Skip points too close to player (blocked by foreground)
 		if distance_from_player < 40.0:  # 40 units = 2 meters
 			continue
-			
-		var screen_x = screen_center.x + point.x * 3 * perspective_scale
-		var screen_y = player_eye_level - point.y * vertical_scale * perspective_scale
+		
+		# Convert world terrain point to screen coordinates
+		var world_to_screen_scale = 3.0  # How many pixels per world unit
+		var screen_x = (point.x * world_to_screen_scale) + camera_offset.x
+		var screen_y = (-point.y * vertical_scale) + camera_offset.y + (viewport_size.y * 0.7)  # Ground level reference
+		
 		screen_points.append(Vector2(screen_x, screen_y))
 	
 	if screen_points.size() < 2:

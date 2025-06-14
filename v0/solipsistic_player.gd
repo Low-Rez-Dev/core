@@ -1,14 +1,14 @@
 extends ProceduralEntity
 class_name SolipsisticPlayer
 
-@export var movement_speed: float = 80.0  # 80 units/sec = 4 m/s walking speed
+@export var movement_speed: float = 4.0  # 4 m/s walking speed
 @export var can_change_z_layers: bool = true
 
-# Physics constants (20 units = 1 meter scale)
-@export var gravity_strength: float = 196.0   # 196 units/s² = 9.8 m/s² (Earth gravity)
-@export var jump_force: float = 70.0         # 70 units/s = 3.5 m/s upward (gives ~0.6m jump)
-@export var max_fall_speed: float = 300.0    # 300 units/s = 15 m/s terminal velocity
-@export var ground_snap_distance: float = 2.0  # 2 units = 10cm snap distance
+# Physics constants (1:1 scale - 1 unit = 1 meter)
+@export var gravity_strength: float = 9.8    # 9.8 m/s² (Earth gravity)
+@export var jump_force: float = 3.5         # 3.5 m/s upward (gives ~0.6m jump)
+@export var max_fall_speed: float = 15.0    # 15 m/s terminal velocity
+@export var ground_snap_distance: float = 0.1  # 0.1m snap distance
 
 # Input state
 var move_input: float = 0.0
@@ -37,7 +37,7 @@ func _ready():
 	# Add to group for HUD access
 	add_to_group("Player")
 	
-	# Player always exists at the center of their own reality
+	# Player always stays at consciousness center on screen
 	position = SolipsisticCoordinates.CONSCIOUSNESS_CENTER
 	
 	# Set reasonable player visual properties
@@ -70,6 +70,9 @@ func _ready():
 	
 	# Also try immediate initialization as backup
 	initialize_physics_state()
+	
+	# Emergency drop to ground after a short delay
+	call_deferred("drop_to_ground")
 
 func _process(delta):
 	# Update rotation cooldown
@@ -120,41 +123,72 @@ func change_orientation(new_orientation: int):
 	print("Observer now perceives reality facing: %s" % orientation_names[new_orientation])
 
 func handle_movement_input(delta):
-	"""Handle side-view movement - A/D moves left/right across screen"""
+	"""Handle cardinal movement - A/D moves along current facing direction"""
 	if not input_handler:
 		return
 	
 	var movement_2d = input_handler.get_movement_direction()
-	move_input = movement_2d.x  # A/D keys for left/right screen movement
+	move_input = movement_2d.x  # A/D keys for movement along facing direction
 	
 	if move_input != 0.0:
-		# In side-view, A/D should move along the horizontal cross-section axis
+		# Calculate movement along current orientation's movement axis
 		var coords = SolipsisticCoordinates
-		var world_movement_delta = move_input * movement_speed * delta
+		var movement_delta = move_input * movement_speed * delta
 		
-		# Update consciousness position along the cross-section (horizontal screen) axis
-		match coords.current_orientation:
-			coords.Orientation.EAST, coords.Orientation.WEST:
-				# Cross-section is North-South, so A/D moves along Y axis
-				coords.player_consciousness_pos.y += world_movement_delta
-			coords.Orientation.NORTH, coords.Orientation.SOUTH:
-				# Cross-section is East-West, so A/D moves along X axis
-				coords.player_consciousness_pos.x += world_movement_delta
+		# Get movement direction based on current orientation
+		var movement_vector = coords.orientation_transforms[coords.current_orientation]["move"]
 		
+		# Apply movement along the correct axis
+		coords.player_consciousness_pos += movement_vector * movement_delta
 		coords.consciousness_moved.emit(coords.player_consciousness_pos)
 
 func handle_depth_input():
-	"""Handle side-stepping between depth lanes"""
+	"""Handle depth movement - W/S moves through terrain slices"""
 	if not can_change_z_layers:
 		return
 	
 	var coords = SolipsisticCoordinates
+	var depth_movement = 0.0
+	
+	# DISABLED: W/S continuous depth movement - use R/F for discrete lane changes instead
+	# W/S keys for continuous depth movement (forward/backward through terrain slices)
+	#if Input.is_key_pressed(KEY_W):
+	#	depth_movement = 1.0  # Move forward in depth
+	#elif Input.is_key_pressed(KEY_S):
+	#	depth_movement = -1.0  # Move backward in depth
+	#
+	## Apply depth movement
+	#if depth_movement != 0.0:
+	#	var depth_delta = depth_movement * movement_speed * get_process_delta_time()
+	#	
+	#	# Move along the depth axis (perpendicular to cross-section)
+	#	match coords.current_orientation:
+	#		coords.Orientation.EAST:
+	#			# Looking EAST: depth is +Y direction
+	#			coords.player_consciousness_pos.y += depth_delta
+	#		coords.Orientation.WEST:
+	#			# Looking WEST: depth is -Y direction
+	#			coords.player_consciousness_pos.y -= depth_delta
+	#		coords.Orientation.NORTH:
+	#			# Looking NORTH: depth is -X direction
+	#			coords.player_consciousness_pos.x -= depth_delta
+	#		coords.Orientation.SOUTH:
+	#			# Looking SOUTH: depth is +X direction
+	#			coords.player_consciousness_pos.x += depth_delta
+	#	
+	#	coords.consciousness_moved.emit(coords.player_consciousness_pos)
+	
+	# R/F keys for discrete depth stepping (1 meter steps)
 	if Input.is_action_just_pressed("layer_forward"):   # R key
-		coords.start_side_step(1)  # Step forward in depth
-		print("Observer side-stepping forward on depth axis")
+		var depth_vector = coords.orientation_transforms[coords.current_orientation]["depth"]
+		coords.player_consciousness_pos += depth_vector * 1.0  # 1 meter step
+		coords.consciousness_moved.emit(coords.player_consciousness_pos)
+		print("Stepped forward on depth axis: %s" % coords.player_consciousness_pos)
 	elif Input.is_action_just_pressed("layer_backward"): # F key
-		coords.start_side_step(-1)  # Step backward in depth
-		print("Observer side-stepping backward on depth axis")
+		var depth_vector = coords.orientation_transforms[coords.current_orientation]["depth"]
+		coords.player_consciousness_pos -= depth_vector * 1.0  # 1 meter step
+		coords.consciousness_moved.emit(coords.player_consciousness_pos)
+		print("Stepped backward on depth axis: %s" % coords.player_consciousness_pos)
 
 func update_reality_manifestation():
 	"""Updates which entities exist in the observer's current reality"""
@@ -209,54 +243,43 @@ func handle_jump_input():
 		vertical_velocity = -jump_force
 		is_grounded = false
 		print("🚀 SPACE JUMP! Velocity: %.1f" % vertical_velocity)
+	
+	# Manual drop to ground for testing (G key)
+	if Input.is_action_just_pressed("ui_cancel") or Input.is_key_pressed(KEY_G):
+		drop_to_ground()
 
 func apply_gravity_and_physics(delta):
 	"""Apply gravity and handle terrain collision"""
 	var coords = SolipsisticCoordinates
-	var world_pos = coords.player_consciousness_pos
 	
 	# Get terrain system to check height
 	var solipsistic_world = get_tree().get_first_node_in_group("SolipsisticWorld")
 	if not solipsistic_world:
 		return
 	
-	# Get terrain height at current horizontal position
-	var terrain_height = solipsistic_world.get_terrain_height_at(world_pos)
+	# Get terrain height at player's world position (converted from screen position)
+	var player_world_pos = coords.player_consciousness_pos
+	var terrain_height = solipsistic_world.terrain_system.get_height_at_world_pos(player_world_pos)
 	
-	# Get what the visual terrain shows at this position for comparison
-	var visual_terrain_height = 0.0
-	var terrain_renderer = get_tree().get_first_node_in_group("TerrainRenderer")
-	if terrain_renderer and terrain_renderer.terrain_layers.has("interactive"):
-		var visual_points = terrain_renderer.terrain_layers["interactive"]
-		if visual_points.size() > 10:
-			# Find the visual terrain height closest to player position (x=0 in relative coords)
-			var min_distance = INF
-			for point in visual_points:
-				var distance = abs(point.x)
-				if distance < min_distance:
-					min_distance = distance
-					visual_terrain_height = point.y
-	
-	# Debug terrain height comparison (controlled timing)
-	if SolipsisticCoordinates.should_debug_now(delta):  # Use delta to track time properly
-		SolipsisticCoordinates.debug_print("terrain", "🚧 TERRAIN MISMATCH DEBUG:")
-		SolipsisticCoordinates.debug_print("terrain", "   player_world_pos: %s" % world_pos)
-		SolipsisticCoordinates.debug_print("terrain", "   physics_terrain_height: %.3f" % terrain_height)
-		SolipsisticCoordinates.debug_print("terrain", "   visual_terrain_height: %.3f" % visual_terrain_height)
-		SolipsisticCoordinates.debug_print("terrain", "   HEIGHT DIFFERENCE: %.3f" % (terrain_height - visual_terrain_height))
-		SolipsisticCoordinates.debug_print("terrain", "   player_current_height: %.3f" % current_height)
+	# Debug terrain height (controlled timing)
+	if SolipsisticCoordinates.should_debug_now(delta):
+		SolipsisticCoordinates.debug_print("terrain", "🏔️ PHYSICS DEBUG:")
+		SolipsisticCoordinates.debug_print("terrain", "   world_pos: %s" % player_world_pos)
+		SolipsisticCoordinates.debug_print("terrain", "   terrain_height: %.3fm" % terrain_height)
+		SolipsisticCoordinates.debug_print("terrain", "   player_height: %.3fm" % current_height)
+		SolipsisticCoordinates.debug_print("terrain", "   height_above_terrain: %.3fm" % (current_height - terrain_height))
 	
 	# CRITICAL DEBUG: If terrain height is 0.0, something is wrong
-	if terrain_height == 0.0 and world_pos.distance_to(Vector2.ZERO) < 0.1:
+	if terrain_height == 0.0 and player_world_pos.distance_to(Vector2.ZERO) < 0.1:
 		print("🚨 TERRAIN HEIGHT IS 0.0! This is likely the bug!")
-		print("   world_pos: %s" % world_pos)
+		print("   player_world_pos: %s" % player_world_pos)
 		print("   solipsistic_world: %s" % solipsistic_world)
 		print("   terrain_system exists: %s" % (solipsistic_world.terrain_system != null))
 		if solipsistic_world.terrain_system:
 			print("   terrain_system.height_grid size: %d" % solipsistic_world.terrain_system.height_grid.size())
 			# Try direct calculation
-			var direct_calc = solipsistic_world.terrain_system.calculate_terrain_height(world_pos)
-			print("   direct calculate_terrain_height(world_pos): %.3f" % direct_calc)
+			var direct_calc = solipsistic_world.terrain_system.calculate_terrain_height(player_world_pos)
+			print("   direct calculate_terrain_height(player_world_pos): %.3f" % direct_calc)
 	
 	# Apply gravity if not grounded
 	if not is_grounded:
@@ -275,9 +298,19 @@ func apply_gravity_and_physics(delta):
 	
 	# Check ground collision - player should stand ON TOP of terrain
 	var ground_level = terrain_height  # Player stands ON the terrain surface
-	if current_height <= ground_level and vertical_velocity >= 0:  # Only snap when falling down
-		# Land on ground - player stands ON the terrain surface
-		print("SNAP TO GROUND: %.3f -> %.3f (terrain: %.3f)" % [current_height, ground_level, terrain_height])
+	
+	# Safety check: prevent extreme terrain height changes from launching player
+	var height_difference = abs(terrain_height - current_height)
+	if height_difference > 10.0:  # If terrain changed by more than 10m, gradually adjust
+		var adjustment_speed = 5.0  # meters per second
+		var max_adjustment = adjustment_speed * delta
+		if terrain_height > current_height:
+			current_height = min(current_height + max_adjustment, terrain_height)
+		else:
+			current_height = max(current_height - max_adjustment, terrain_height)
+		is_grounded = true
+		vertical_velocity = 0.0
+	elif current_height <= ground_level and vertical_velocity >= 0:  # Normal landing
 		current_height = ground_level
 		if vertical_velocity > 0:  # Was falling
 			print("🏃 LANDING! Velocity: %.1f -> 0, Height: %.1f (terrain: %.1f)" % [vertical_velocity, current_height, terrain_height])
@@ -297,17 +330,16 @@ func apply_gravity_and_physics(delta):
 			vertical_velocity, current_height, terrain_height, ground_level, is_grounded
 		])
 	
-	# Apply visual positioning using perspective system
-	var viewport_size = get_viewport().get_visible_rect().size
-	var horizon_y = viewport_size.y * 0.7  # Same as terrain renderer
-	var player_eye_level = horizon_y - 50   # Same as terrain renderer
+	# Player stays horizontally centered, but Y adjusts for height
+	var height_above_terrain = current_height - terrain_height
+	var vertical_scale = 20.0  # 20 pixels per meter for height visualization
 	
-	# Player position: standing on terrain at their current height
-	var vertical_scale = 2.0  # Same as terrain renderer
-	position.y = player_eye_level - current_height * vertical_scale
+	# Ground reference level (where terrain appears on screen)
+	var ground_reference_y = SolipsisticCoordinates.CONSCIOUSNESS_CENTER.y + 50.0  # 50px below center = ground level
 	
-	# Keep player horizontally centered (consciousness center)
+	# Position player relative to terrain surface
 	position.x = SolipsisticCoordinates.CONSCIOUSNESS_CENTER.x
+	position.y = ground_reference_y - (terrain_height * vertical_scale) - (height_above_terrain * vertical_scale)
 	
 	# Reduced debug info (now that we have HUD)
 	if Engine.get_process_frames() % 300 == 0:  # Print every 5 seconds
@@ -324,6 +356,41 @@ func get_current_height_above_terrain() -> float:
 		return 0.0
 	var terrain_height = solipsistic_world.get_terrain_height_at(world_pos)
 	return current_height - terrain_height
+
+func drop_to_ground():
+	"""Emergency function to ensure player is on ground"""
+	print("🔧 DROP TO GROUND DEBUG:")
+	var coords = SolipsisticCoordinates
+	var world_pos = coords.player_consciousness_pos
+	print("   world_pos: %s" % world_pos)
+	
+	var solipsistic_world = get_tree().get_first_node_in_group("SolipsisticWorld")
+	print("   solipsistic_world: %s" % solipsistic_world)
+	
+	if solipsistic_world:
+		print("   terrain_system: %s" % solipsistic_world.terrain_system)
+		if solipsistic_world.terrain_system:
+			var terrain_height = solipsistic_world.terrain_system.get_height_at_world_pos(world_pos)
+			print("   terrain_height: %.3fm" % terrain_height)
+			print("   old current_height: %.3fm" % current_height)
+			current_height = terrain_height
+			vertical_velocity = 0.0
+			is_grounded = true
+			print("   new current_height: %.3fm" % current_height)
+			print("🎯 DROPPED TO GROUND! Success!")
+		else:
+			print("❌ No terrain_system found!")
+			# Manual fallback - just set to ground level
+			current_height = 0.0
+			vertical_velocity = 0.0
+			is_grounded = true
+			print("🎯 MANUAL DROP TO ZERO!")
+	else:
+		print("❌ No SolipsisticWorld found!")
+		current_height = 0.0
+		vertical_velocity = 0.0
+		is_grounded = true
+		print("🎯 EMERGENCY DROP TO ZERO!")
 
 func initialize_physics_state():
 	"""Initialize player height to be standing ON TOP of terrain at spawn"""
