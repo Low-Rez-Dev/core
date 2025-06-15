@@ -9,9 +9,24 @@ signal orientation_changed(new_orientation)
 
 var current_orientation = Orientation.NORTH_SOUTH
 var grid_size: float = 1.0  # 1 meter per grid cell
+var focus_lane_system: FocusLaneSystem
+var terrain_system: TerrainSystem
 
 func _ready():
 	set_name("CoordinateSystem")
+	
+	# Create focus lane system
+	focus_lane_system = FocusLaneSystem.new()
+	add_child(focus_lane_system)
+	
+	# Create terrain system
+	terrain_system = TerrainSystem.new()
+	terrain_system.set_name("TerrainSystem")
+	add_child(terrain_system)
+	
+	# For now, let dependent systems use direct access
+	# CSLocator can be re-enabled once working properly
+	print("CoordinateSystem ready with terrain and focus lane systems")
 
 func get_movement_axis() -> String:
 	match current_orientation:
@@ -54,9 +69,9 @@ func rotate_orientation_counterclockwise():
 func world_to_screen_direction(world_dir: Vector3) -> Vector2:
 	match current_orientation:
 		Orientation.NORTH_SOUTH:
-			return Vector2(world_dir.x, -world_dir.z)  # Z becomes vertical on screen
+			return Vector2(world_dir.x, -world_dir.y)  # Y becomes vertical on screen (flipped)
 		Orientation.EAST_WEST:
-			return Vector2(world_dir.z, -world_dir.x)  # X becomes vertical on screen
+			return Vector2(world_dir.z, -world_dir.y)  # Y becomes vertical on screen (flipped)
 		_:
 			return Vector2.ZERO
 

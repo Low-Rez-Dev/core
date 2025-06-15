@@ -2,33 +2,33 @@ extends Animal
 class_name Person
 
 @export var person_height: float = 1.8  # meters
-@export var skin_tone: Color = Color(0.9, 0.8, 0.7)
+@export var skin_tone: Color = Color(1.0, 0.6, 0.4)  # More visible orange skin
 @export var clothing_color: Color = Color(0.3, 0.4, 0.8)
 
 func define_animal_structure():
-	print("Person: defining animal structure...")
+	# Defining person structure
 	var unit_scale = person_height / 1.8  # Scale based on height
-	print("Person: unit_scale = ", unit_scale)
+	# Scale calculated
 	
-	add_entity_shape(AnimalPart.HEAD, "circle", Vector2(0.3, 0.3) * unit_scale, Vector3(0, 0.85 * unit_scale, 0))
-	add_entity_shape(AnimalPart.NECK, "rectangle", Vector2(0.15, 0.15) * unit_scale, Vector3(0, 0.7 * unit_scale, 0))
-	add_entity_shape(AnimalPart.BODY, "rectangle", Vector2(0.4, 0.6) * unit_scale, Vector3(0, 0.3 * unit_scale, 0))
+	add_entity_shape(AnimalPart.HEAD, "circle", Vector2(0.25, 0.25) * unit_scale, Vector3(0, 0.85 * unit_scale, 0))
+	add_entity_shape(AnimalPart.NECK, "rectangle", Vector2(0.12, 0.1) * unit_scale, Vector3(0, 0.7 * unit_scale, 0))
+	add_entity_shape(AnimalPart.BODY, "rectangle", Vector2(0.35, 0.5) * unit_scale, Vector3(0, 0.3 * unit_scale, 0))
 	
-	add_entity_shape(AnimalPart.LEFT_ARM_UPPER, "rectangle", Vector2(0.15, 0.35) * unit_scale, Vector3(-0.3 * unit_scale, 0.5 * unit_scale, 0))
-	add_entity_shape(AnimalPart.LEFT_ARM_LOWER, "rectangle", Vector2(0.12, 0.3) * unit_scale, Vector3(-0.3 * unit_scale, 0.1 * unit_scale, 0))
-	add_entity_shape(AnimalPart.LEFT_HAND, "circle", Vector2(0.1, 0.1) * unit_scale, Vector3(-0.3 * unit_scale, -0.1 * unit_scale, 0))
+	add_entity_shape(AnimalPart.LEFT_ARM_UPPER, "rectangle", Vector2(0.08, 0.3) * unit_scale, Vector3(-0.25 * unit_scale, 0.45 * unit_scale, 0))
+	add_entity_shape(AnimalPart.LEFT_ARM_LOWER, "rectangle", Vector2(0.06, 0.25) * unit_scale, Vector3(-0.25 * unit_scale, 0.1 * unit_scale, 0))
+	add_entity_shape(AnimalPart.LEFT_HAND, "circle", Vector2(0.06, 0.06) * unit_scale, Vector3(-0.25 * unit_scale, -0.1 * unit_scale, 0))
 	
-	add_entity_shape(AnimalPart.RIGHT_ARM_UPPER, "rectangle", Vector2(0.15, 0.35) * unit_scale, Vector3(0.3 * unit_scale, 0.5 * unit_scale, 0))
-	add_entity_shape(AnimalPart.RIGHT_ARM_LOWER, "rectangle", Vector2(0.12, 0.3) * unit_scale, Vector3(0.3 * unit_scale, 0.1 * unit_scale, 0))
-	add_entity_shape(AnimalPart.RIGHT_HAND, "circle", Vector2(0.1, 0.1) * unit_scale, Vector3(0.3 * unit_scale, -0.1 * unit_scale, 0))
+	add_entity_shape(AnimalPart.RIGHT_ARM_UPPER, "rectangle", Vector2(0.08, 0.3) * unit_scale, Vector3(0.25 * unit_scale, 0.45 * unit_scale, 0))
+	add_entity_shape(AnimalPart.RIGHT_ARM_LOWER, "rectangle", Vector2(0.06, 0.25) * unit_scale, Vector3(0.25 * unit_scale, 0.1 * unit_scale, 0))
+	add_entity_shape(AnimalPart.RIGHT_HAND, "circle", Vector2(0.06, 0.06) * unit_scale, Vector3(0.25 * unit_scale, -0.1 * unit_scale, 0))
 	
-	add_entity_shape(AnimalPart.LEFT_LEG_UPPER, "rectangle", Vector2(0.18, 0.4) * unit_scale, Vector3(-0.1 * unit_scale, -0.2 * unit_scale, 0))
-	add_entity_shape(AnimalPart.LEFT_LEG_LOWER, "rectangle", Vector2(0.15, 0.35) * unit_scale, Vector3(-0.1 * unit_scale, -0.6 * unit_scale, 0))
-	add_entity_shape(AnimalPart.LEFT_FOOT, "rectangle", Vector2(0.25, 0.1) * unit_scale, Vector3(-0.1 * unit_scale, -0.9 * unit_scale, 0))
+	add_entity_shape(AnimalPart.LEFT_LEG_UPPER, "rectangle", Vector2(0.12, 0.35) * unit_scale, Vector3(-0.08 * unit_scale, -0.15 * unit_scale, 0))
+	add_entity_shape(AnimalPart.LEFT_LEG_LOWER, "rectangle", Vector2(0.1, 0.3) * unit_scale, Vector3(-0.08 * unit_scale, -0.55 * unit_scale, 0))
+	add_entity_shape(AnimalPart.LEFT_FOOT, "rectangle", Vector2(0.2, 0.08) * unit_scale, Vector3(-0.08 * unit_scale, -0.85 * unit_scale, 0))
 	
-	add_entity_shape(AnimalPart.RIGHT_LEG_UPPER, "rectangle", Vector2(0.18, 0.4) * unit_scale, Vector3(0.1 * unit_scale, -0.2 * unit_scale, 0))
-	add_entity_shape(AnimalPart.RIGHT_LEG_LOWER, "rectangle", Vector2(0.15, 0.35) * unit_scale, Vector3(0.1 * unit_scale, -0.6 * unit_scale, 0))
-	add_entity_shape(AnimalPart.RIGHT_FOOT, "rectangle", Vector2(0.25, 0.1) * unit_scale, Vector3(0.1 * unit_scale, -0.9 * unit_scale, 0))
+	add_entity_shape(AnimalPart.RIGHT_LEG_UPPER, "rectangle", Vector2(0.12, 0.35) * unit_scale, Vector3(0.08 * unit_scale, -0.15 * unit_scale, 0))
+	add_entity_shape(AnimalPart.RIGHT_LEG_LOWER, "rectangle", Vector2(0.1, 0.3) * unit_scale, Vector3(0.08 * unit_scale, -0.55 * unit_scale, 0))
+	add_entity_shape(AnimalPart.RIGHT_FOOT, "rectangle", Vector2(0.2, 0.08) * unit_scale, Vector3(0.08 * unit_scale, -0.85 * unit_scale, 0))
 	
 	add_limb(LimbType.ARM, true, AnimalPart.LEFT_ARM_UPPER, AnimalPart.LEFT_ARM_LOWER, AnimalPart.LEFT_HAND)
 	add_limb(LimbType.ARM, false, AnimalPart.RIGHT_ARM_UPPER, AnimalPart.RIGHT_ARM_LOWER, AnimalPart.RIGHT_HAND)
@@ -39,22 +39,24 @@ func define_animal_structure():
 	setup_human_joints()
 
 func apply_human_colors():
+	# Applying human colors
 	entity_shapes[AnimalPart.HEAD].color = skin_tone
 	entity_shapes[AnimalPart.NECK].color = skin_tone
 	entity_shapes[AnimalPart.LEFT_HAND].color = skin_tone
 	entity_shapes[AnimalPart.RIGHT_HAND].color = skin_tone
+	# Head color applied
 	
 	entity_shapes[AnimalPart.BODY].color = clothing_color
-	entity_shapes[AnimalPart.LEFT_ARM_UPPER].color = clothing_color
-	entity_shapes[AnimalPart.LEFT_ARM_LOWER].color = clothing_color
-	entity_shapes[AnimalPart.RIGHT_ARM_UPPER].color = clothing_color
-	entity_shapes[AnimalPart.RIGHT_ARM_LOWER].color = clothing_color
+	entity_shapes[AnimalPart.LEFT_ARM_UPPER].color = skin_tone
+	entity_shapes[AnimalPart.LEFT_ARM_LOWER].color = skin_tone
+	entity_shapes[AnimalPart.RIGHT_ARM_UPPER].color = skin_tone
+	entity_shapes[AnimalPart.RIGHT_ARM_LOWER].color = skin_tone
 	
-	entity_shapes[AnimalPart.LEFT_LEG_UPPER].color = clothing_color
-	entity_shapes[AnimalPart.LEFT_LEG_LOWER].color = clothing_color
+	entity_shapes[AnimalPart.LEFT_LEG_UPPER].color = skin_tone
+	entity_shapes[AnimalPart.LEFT_LEG_LOWER].color = skin_tone
 	entity_shapes[AnimalPart.LEFT_FOOT].color = Color(0.2, 0.1, 0.0)  # Brown shoes
-	entity_shapes[AnimalPart.RIGHT_LEG_UPPER].color = clothing_color
-	entity_shapes[AnimalPart.RIGHT_LEG_LOWER].color = clothing_color
+	entity_shapes[AnimalPart.RIGHT_LEG_UPPER].color = skin_tone
+	entity_shapes[AnimalPart.RIGHT_LEG_LOWER].color = skin_tone
 	entity_shapes[AnimalPart.RIGHT_FOOT].color = Color(0.2, 0.1, 0.0)  # Brown shoes
 
 func setup_human_joints():

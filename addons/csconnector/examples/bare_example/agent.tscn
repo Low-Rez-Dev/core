@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://i8dvq80imdug"]
+
+[ext_resource type="Script" path="res://examples/csconnector/bare_example/agent.gd" id="1_801lp"]
+
+[node name="Agent" type="Node"]
+script = ExtResource("1_801lp")
+
+[node name="Timer" type="Timer" parent="."]
+autostart = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

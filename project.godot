@@ -11,19 +11,24 @@ config_version=5
 [application]
 
 config/name="Core"
-run/main_scene="uid://bpb4c4fxrlc1j"
+run/main_scene="uid://ceebyagudq2o3"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
 
-SolipsisticCoordinates="*res://solipsistic_coordinates.gd"
 CoordinateSystem="*res://coordinate_system.gd"
+BeehaveGlobalMetrics="*res://addons/beehave/metrics/beehave_global_metrics.gd"
+BeehaveGlobalDebugger="*res://addons/beehave/debug/global_debugger.gd"
 
 [display]
 
 window/size/viewport_width=640
 window/size/viewport_height=480
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/beehave/plugin.cfg")
 
 [input]
 

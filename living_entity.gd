@@ -1,4 +1,4 @@
-extends Node2D
+extends GridEntity
 class_name LivingEntity
 
 enum EntityType {
@@ -70,18 +70,18 @@ var joints: Array[Joint] = []
 var coordinate_system: Node
 
 @export var entity_type: EntityType = EntityType.ANIMAL
-@export var entity_scale: float = 100.0  # Bigger scale for visibility
+@export var entity_scale: float = 60.0  # Scaled down to fit on screen
 @export var base_color: Color = Color(0.8, 0.7, 0.6)
 
 func _ready():
-	print("LivingEntity: _ready() called")
-	coordinate_system = get_node("/root/CoordinateSystem")
-	if not coordinate_system:
-		coordinate_system = get_parent()  # Fallback for testing
-		print("LivingEntity: using parent as coordinate system")
+	super._ready()  # Call GridEntity._ready() first
+	
+	# Direct access for now until CSLocator timing issues are resolved
+	call_deferred("_setup_coordinate_system")
+	
 	define_entity_structure()
 	setup_joints()
-	print("LivingEntity: _ready() finished, entity_shapes count: ", entity_shapes.size())
+	# Entity structure initialized
 
 func define_entity_structure():
 	pass
@@ -117,15 +117,10 @@ func get_screen_position_for_part(part_id: int) -> Vector2:
 		return Vector2(world_pos.x, world_pos.y)
 
 func draw_entity():
-	queue_redraw()
+	pass  # Disabled - drawing handled by parent scene
 
 func _draw():
-	for part_id in entity_shapes.keys():
-		var shape = entity_shapes[part_id]
-		var screen_pos = get_screen_position_for_part(part_id)
-		if part_id < 3:  # Debug first 3 parts only
-			print("Part ", part_id, " at ", screen_pos, " offset: ", shape.offset)
-		draw_entity_part(part_id)
+	pass  # Disabled - drawing handled by parent scene
 
 func draw_entity_part(part_id: int):
 	if not entity_shapes.has(part_id):
@@ -175,3 +170,13 @@ func update_joint_positions():
 
 func _process(_delta):
 	draw_entity()
+
+# CSLocator callback when coordinate system service is found
+func _on_coordinate_system_found(service):
+	coordinate_system = service
+
+# Direct access setup function
+func _setup_coordinate_system():
+	var coord_system = get_node("/root/CoordinateSystem")
+	if coord_system:
+		coordinate_system = coord_system
