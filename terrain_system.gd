@@ -4,7 +4,7 @@ class_name TerrainSystem
 # Terrain system for 2.5D side-view with cell-based heights
 # Each grid cell has a height, slopes connect adjacent cells
 
-@export var default_height: float = 0.0  # Default ground level (Y=0 in world coords)
+@export var default_height: float = -10.0  # Default ground level, extended downward
 @export var height_scale: float = 1.0    # Multiplier for height variations
 
 # Dictionary to store height data: Vector2i(x,z) -> height
@@ -19,8 +19,9 @@ func _ready():
 
 func generate_test_terrain():
 	# Create some simple test terrain with hills and valleys
-	for x in range(-50, 51):
-		for z in range(-50, 51):
+	# Extend terrain much further to prevent seeing sky when zoomed out
+	for x in range(-200, 201):
+		for z in range(-200, 201):
 			var cell_pos = Vector2i(x, z)
 			
 			# Simple procedural terrain generation

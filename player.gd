@@ -8,6 +8,13 @@ var camera_offset: Vector2
 var is_moving: bool = false
 var is_rotating: bool = false
 
+# Camera system
+var camera: Camera2D
+var zoom_level: float = 1.0
+var min_zoom: float = 0.8
+var max_zoom: float = 5.0
+var zoom_speed: float = 0.1
+
 # Accumulated movement for smooth grid traversal
 var accumulated_movement_x: float = 0.0
 var accumulated_movement_z: float = 0.0
@@ -24,10 +31,22 @@ signal rotation_complete()
 func _ready():
 	super._ready()
 	add_to_group("entities")  # Add to entities group for focus lane system
-	add_to_group("player")   # Add to player group for minimap
+	add_to_group("player")   # Add to player group
 	print("Player added to groups: entities, player")
+	setup_camera()
 	setup_movement()
-	setup_debug_minimap()
+
+func setup_camera():
+	# Create and configure the camera
+	camera = Camera2D.new()
+	camera.name = "PlayerCamera"
+	camera.enabled = true
+	camera.zoom = Vector2(zoom_level, zoom_level)
+	
+	# Add camera as child of player so it follows automatically
+	add_child(camera)
+	
+	print("Camera setup complete, zoom level: ", zoom_level)
 
 func setup_movement():
 	# Direct access for now until CSLocator timing issues are resolved
@@ -54,11 +73,24 @@ func _physics_process(delta):
 	handle_movement_input(delta)
 	handle_jumping_input()
 	handle_rotation_input()
+	handle_zoom_input()
 	apply_gravity_and_terrain_collision(delta)
 	update_visual_position()
 	
 	# Force redraw every frame for debugging
 	queue_redraw()
+
+func _input(event):
+	# Handle mouse wheel zoom
+	if event is InputEventMouseButton and camera:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
+			zoom_level = clamp(zoom_level + zoom_speed, min_zoom, max_zoom)
+			camera.zoom = Vector2(zoom_level, zoom_level)
+			print("Zoom in: ", zoom_level)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
+			zoom_level = clamp(zoom_level - zoom_speed, min_zoom, max_zoom)
+			camera.zoom = Vector2(zoom_level, zoom_level)
+			print("Zoom out: ", zoom_level)
 
 func handle_movement_input(delta):
 	# Smooth cardinal movement (A/D keys) - continuous
@@ -87,6 +119,29 @@ func jump():
 	velocity_y = -jump_strength  # Negative Y is up
 	is_grounded = false
 	print("Player jumped! Velocity: ", velocity_y)
+
+func handle_zoom_input():
+	if not camera:
+		return
+	
+	var zoom_change = 0.0
+	
+	# Mouse wheel or + - keys for zoom
+	if Input.is_action_just_pressed("ui_accept") and Input.is_key_pressed(KEY_SHIFT):
+		zoom_change = zoom_speed  # Zoom in with Shift+Space
+	elif Input.is_action_just_pressed("ui_cancel"):
+		zoom_change = -zoom_speed  # Zoom out with Escape
+	
+	# Check for + and - keys
+	if Input.is_key_pressed(KEY_EQUAL) or Input.is_key_pressed(KEY_KP_ADD):
+		zoom_change = zoom_speed * 2  # Faster zoom in
+	elif Input.is_key_pressed(KEY_MINUS) or Input.is_key_pressed(KEY_KP_SUBTRACT):
+		zoom_change = -zoom_speed * 2  # Faster zoom out
+	
+	if zoom_change != 0.0:
+		zoom_level = clamp(zoom_level + zoom_change, min_zoom, max_zoom)
+		camera.zoom = Vector2(zoom_level, zoom_level)
+		print("Zoom level: ", zoom_level)
 
 func apply_gravity_and_terrain_collision(delta):
 	if not terrain_system:
@@ -294,17 +349,25 @@ func perform_rotation(clockwise: bool):
 	rotation_complete.emit()
 
 func update_visual_position():
-	# Only snap to grid during discrete movements, not during smooth movement
-	# Smooth movement handles its own positioning
-	pass
+	# Bridge physics Y position with grid system Y coordinate
+	# Convert current screen Y position back to world altitude
+	if terrain_system:
+		# Calculate current altitude based on screen position
+		var terrain_height_at_position = get_terrain_height_at_current_position()
+		var ground_screen_y = 240 - terrain_height_at_position
+		var character_foot_offset = 13
+		var character_ground_y = ground_screen_y - character_foot_offset
+		
+		# Calculate how high above ground the player is (in screen pixels)
+		var height_above_ground = character_ground_y - global_position.y
+		
+		# Convert to world units and then to grid units for Y coordinate
+		var altitude_in_world_units = terrain_height_at_position + height_above_ground
+		var grid_y = int(altitude_in_world_units / GridCoordinates.GRID_SIZE)
+		
+		# Update the grid position Y to reflect current altitude
+		grid_position_3d.y = grid_y
 
-func setup_debug_minimap():
-	# Add debug minimap directly to the scene
-	print("Creating minimap...")
-	var minimap = preload("res://debug_minimap.gd").new()
-	print("Minimap created: ", minimap)
-	get_tree().current_scene.add_child(minimap)
-	print("Minimap added to scene: ", get_tree().current_scene)
 
 
 func set_render_properties(props: Dictionary):
@@ -314,101 +377,181 @@ func set_render_properties(props: Dictionary):
 	z_index = props.z_index
 
 func _draw():
+	# Draw grid coordinates above the player
+	draw_grid_coordinates()
+	
 	# Draw a 3/4 view character facing the camera
 	draw_three_quarter_character()
+
+func draw_grid_coordinates():
+	# Display X Z Y coordinates above the player (Y is altitude)
+	var coord_text = "X:%d Z:%d Y:%d" % [grid_position_3d.x, grid_position_3d.z, grid_position_3d.y]
+	var text_pos = Vector2(0, -60)  # Above the player's head
+	
+	# Draw background for better readability
+	var font = ThemeDB.fallback_font
+	var font_size = 12
+	var text_size = font.get_string_size(coord_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
+	var bg_rect = Rect2(text_pos - Vector2(text_size.x/2, text_size.y), text_size + Vector2(4, 2))
+	draw_rect(bg_rect, Color(0, 0, 0, 0.7))  # Semi-transparent black background
+	
+	# Draw the coordinate text in white
+	draw_string(font, text_pos - Vector2(text_size.x/2, 0), coord_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, Color.WHITE)
 
 func draw_three_quarter_character():
 	# Ancient Greek pottery colors
 	var pottery_dark = Color(0.15, 0.1, 0.08)    # Dark pottery paint (almost black)
 	var pottery_medium = Color(0.2, 0.15, 0.12)  # Medium pottery shade
 	var eye_white = Color(0.95, 0.9, 0.85)       # Off-white for eyes
-	var eye_blue = Color(0.2, 0.4, 0.7)          # Deep blue for eyes
 	var accent_red = Color(0.6, 0.15, 0.1)       # Deep red accent
 	
 	# Scale factor for the character
 	var scale = 1.0
 	
-	# 3/4 view facing the camera - no direction flipping
+	# Greek pottery figure style - right-facing profile like pottery references
 	
-	# Head (slightly oval for 3/4 view)
-	var head_pos = Vector2(0, -25 * scale)
-	var head_points = PackedVector2Array()
-	for i in range(16):
-		var angle = i * 2 * PI / 16
-		var x = head_pos.x + cos(angle) * 7 * scale
-		var y = head_pos.y + sin(angle) * 8 * scale
-		head_points.append(Vector2(x, y))
+	# Head (side profile facing right)
+	var head_points = PackedVector2Array([
+		Vector2(-4 * scale, -32 * scale),    # Back of head
+		Vector2(2 * scale, -35 * scale),     # Top of head
+		Vector2(6 * scale, -30 * scale),     # Forehead
+		Vector2(7 * scale, -25 * scale),     # Nose tip
+		Vector2(5 * scale, -22 * scale),     # Chin
+		Vector2(0 * scale, -21 * scale),     # Jaw
+		Vector2(-4 * scale, -24 * scale)     # Back of jaw
+	])
 	draw_colored_polygon(head_points, pottery_dark)
 	
-	# Hair (covering top and back of head)
+	# Hair/helmet (Greek warrior style, profile)
 	var hair_points = PackedVector2Array([
-		Vector2(-6 * scale, -30 * scale),
-		Vector2(-4 * scale, -33 * scale),
-		Vector2(0, -33 * scale),
-		Vector2(4 * scale, -32 * scale),
-		Vector2(6 * scale, -29 * scale),
-		Vector2(5 * scale, -25 * scale)
+		Vector2(-6 * scale, -33 * scale),
+		Vector2(-2 * scale, -37 * scale),
+		Vector2(4 * scale, -36 * scale),
+		Vector2(6 * scale, -32 * scale),
+		Vector2(2 * scale, -35 * scale),
+		Vector2(-4 * scale, -32 * scale)
 	])
 	draw_colored_polygon(hair_points, pottery_dark)
 	
-	# Eyes (both visible in 3/4 view)
-	draw_circle(Vector2(-2 * scale, -27 * scale), 1.2 * scale, eye_white)  # Left eye
-	draw_circle(Vector2(-2 * scale, -27 * scale), 0.8 * scale, eye_blue)   # Left pupil (blue)
-	draw_circle(Vector2(2 * scale, -26 * scale), 1.0 * scale, eye_white)   # Right eye (slightly smaller for depth)
-	draw_circle(Vector2(2 * scale, -26 * scale), 0.6 * scale, eye_blue)    # Right pupil (blue)
+	# Eye (single eye visible in profile)
+	draw_circle(Vector2(2 * scale, -29 * scale), 1.5 * scale, eye_white)
+	draw_circle(Vector2(2 * scale, -29 * scale), 1.0 * scale, pottery_dark)
 	
-	# Nose (small triangle for 3/4 view)
+	# Nose (Greek profile nose - pointing right)
 	var nose_points = PackedVector2Array([
-		Vector2(1 * scale, -24 * scale),
-		Vector2(3 * scale, -23 * scale),
-		Vector2(1 * scale, -22 * scale)
+		Vector2(4 * scale, -27 * scale),
+		Vector2(7 * scale, -25 * scale),
+		Vector2(5 * scale, -24 * scale)
 	])
 	draw_colored_polygon(nose_points, pottery_medium)
 	
-	# Body (slightly angled rectangle for 3/4 view)
-	var body_points = PackedVector2Array([
-		Vector2(-5 * scale, -17 * scale),    # Top left
-		Vector2(4 * scale, -17 * scale),     # Top right
-		Vector2(5 * scale, -5 * scale),      # Bottom right
-		Vector2(-4 * scale, -5 * scale)      # Bottom left
+	# Neck
+	draw_rect(Rect2(-2 * scale, -21 * scale, 4 * scale, 4 * scale), pottery_dark)
+	
+	# Torso (buffer chest like Greek warrior)
+	var torso_points = PackedVector2Array([
+		Vector2(-7 * scale, -17 * scale),    # Top left (wider shoulders)
+		Vector2(7 * scale, -17 * scale),     # Top right (wider shoulders)
+		Vector2(8 * scale, -8 * scale),      # Bottom right (broader chest)
+		Vector2(-8 * scale, -8 * scale)      # Bottom left (broader chest)
 	])
-	draw_colored_polygon(body_points, pottery_dark)
+	draw_colored_polygon(torso_points, pottery_dark)
 	
-	# Back arm (partially visible)
-	draw_line(Vector2(-4 * scale, -14 * scale), Vector2(-9 * scale, -10 * scale), pottery_dark, 2 * scale)
-	draw_line(Vector2(-9 * scale, -10 * scale), Vector2(-7 * scale, -6 * scale), pottery_dark, 2 * scale)
-	draw_circle(Vector2(-7 * scale, -6 * scale), 1.8 * scale, pottery_dark)  # Back hand
-	
-	# Front arm (fully visible)
-	draw_line(Vector2(3 * scale, -14 * scale), Vector2(9 * scale, -9 * scale), pottery_dark, 3 * scale)
-	draw_line(Vector2(9 * scale, -9 * scale), Vector2(7 * scale, -3 * scale), pottery_dark, 3 * scale)
-	draw_circle(Vector2(7 * scale, -3 * scale), 2.2 * scale, pottery_dark)  # Front hand
-	
-	# Back leg (partially visible)
-	var back_leg_points = PackedVector2Array([
-		Vector2(-3 * scale, -5 * scale),     # Top left
-		Vector2(-1 * scale, -5 * scale),     # Top right
-		Vector2(-1 * scale, 10 * scale),     # Bottom right
-		Vector2(-3 * scale, 10 * scale)      # Bottom left
+	# Hip section (connects torso to legs)
+	var hip_points = PackedVector2Array([
+		Vector2(-8 * scale, -8 * scale),     # Top left
+		Vector2(8 * scale, -8 * scale),      # Top right
+		Vector2(6 * scale, -2 * scale),      # Bottom right (tapered waist)
+		Vector2(-6 * scale, -2 * scale)      # Bottom left (tapered waist)
 	])
-	draw_colored_polygon(back_leg_points, pottery_dark)
+	draw_colored_polygon(hip_points, pottery_dark)
 	
-	# Front leg (fully visible)
-	var front_leg_points = PackedVector2Array([
-		Vector2(1 * scale, -5 * scale),      # Top left
-		Vector2(4 * scale, -5 * scale),      # Top right
-		Vector2(4 * scale, 10 * scale),      # Bottom right
-		Vector2(1 * scale, 10 * scale)       # Bottom left
+	# BACK ARM (left side) - buffer/muscular
+	var back_upper_arm = PackedVector2Array([
+		Vector2(-7 * scale, -15 * scale),    # Shoulder connection (from wider shoulder)
+		Vector2(-9 * scale, -14 * scale),    # Outer bicep
+		Vector2(-12 * scale, -10 * scale),   # Elbow (pointing backward)
+		Vector2(-10 * scale, -9 * scale),    # Inner bicep
+		Vector2(-8 * scale, -11 * scale)     # Muscle definition
 	])
-	draw_colored_polygon(front_leg_points, pottery_dark)
+	draw_colored_polygon(back_upper_arm, pottery_dark)
 	
-	# Back foot (smaller, partially hidden)
-	var back_foot_rect = Rect2(-4 * scale, 10 * scale, 4 * scale, 3 * scale)
-	draw_rect(back_foot_rect, pottery_dark)
+	var back_forearm = PackedVector2Array([
+		Vector2(-12 * scale, -10 * scale),   # Elbow
+		Vector2(-10 * scale, -9 * scale),
+		Vector2(-7 * scale, -3 * scale),     # Wrist (forward from elbow)
+		Vector2(-9 * scale, -4 * scale),     # Muscular forearm
+		Vector2(-11 * scale, -7 * scale)     # Forearm bulk
+	])
+	draw_colored_polygon(back_forearm, pottery_dark)
 	
-	# Front foot (larger, fully visible)
-	var front_foot_rect = Rect2(1 * scale, 10 * scale, 6 * scale, 3 * scale)
-	draw_rect(front_foot_rect, pottery_dark)
+	# Back hand (larger for heroic proportions)
+	draw_circle(Vector2(-8 * scale, -3 * scale), 2.5 * scale, pottery_dark)
+	
+	# FRONT ARM (right side) - buffer/muscular
+	var front_upper_arm = PackedVector2Array([
+		Vector2(7 * scale, -15 * scale),     # Shoulder connection (from wider shoulder)
+		Vector2(9 * scale, -14 * scale),     # Outer bicep
+		Vector2(6 * scale, -10 * scale),     # Elbow (pointing backward)
+		Vector2(8 * scale, -9 * scale),      # Inner bicep
+		Vector2(10 * scale, -11 * scale)     # Muscle definition
+	])
+	draw_colored_polygon(front_upper_arm, pottery_dark)
+	
+	var front_forearm = PackedVector2Array([
+		Vector2(6 * scale, -10 * scale),     # Elbow
+		Vector2(8 * scale, -9 * scale),
+		Vector2(10 * scale, -3 * scale),     # Wrist (forward from elbow)
+		Vector2(8 * scale, -4 * scale),      # Muscular forearm
+		Vector2(7 * scale, -7 * scale)       # Forearm bulk
+	])
+	draw_colored_polygon(front_forearm, pottery_dark)
+	
+	# Front hand (larger for heroic proportions)
+	draw_circle(Vector2(9 * scale, -3 * scale), 2.5 * scale, pottery_dark)
+	
+	# BACK LEG (left) - knee pointing forward (right)
+	var back_thigh = PackedVector2Array([
+		Vector2(-5 * scale, -2 * scale),     # Hip connection
+		Vector2(-2 * scale, -2 * scale),
+		Vector2(0 * scale, 6 * scale),       # Knee (pointing forward/right)
+		Vector2(-3 * scale, 6 * scale)
+	])
+	draw_colored_polygon(back_thigh, pottery_dark)
+	
+	# BACK LEG shin - angled forward from knee
+	var back_shin = PackedVector2Array([
+		Vector2(0 * scale, 6 * scale),       # Knee
+		Vector2(-3 * scale, 6 * scale),
+		Vector2(-2 * scale, 11 * scale),     # Ankle (raised up)
+		Vector2(1 * scale, 11 * scale)
+	])
+	draw_colored_polygon(back_shin, pottery_dark)
+	
+	# FRONT LEG (right) - knee pointing forward (right)  
+	var front_thigh = PackedVector2Array([
+		Vector2(2 * scale, -2 * scale),      # Hip connection
+		Vector2(5 * scale, -2 * scale),
+		Vector2(7 * scale, 6 * scale),       # Knee (pointing forward/right)
+		Vector2(4 * scale, 6 * scale)
+	])
+	draw_colored_polygon(front_thigh, pottery_dark)
+	
+	# FRONT LEG shin - angled forward from knee
+	var front_shin = PackedVector2Array([
+		Vector2(7 * scale, 6 * scale),       # Knee
+		Vector2(4 * scale, 6 * scale),
+		Vector2(5 * scale, 11 * scale),      # Ankle (raised up)
+		Vector2(8 * scale, 11 * scale)
+	])
+	draw_colored_polygon(front_shin, pottery_dark)
+	
+	# FEET - both pointing right (facing direction), positioned on ground
+	var back_foot = Rect2(-2 * scale, 11 * scale, 5 * scale, 2 * scale)
+	draw_rect(back_foot, pottery_dark)
+	
+	var front_foot = Rect2(5 * scale, 11 * scale, 5 * scale, 2 * scale)
+	draw_rect(front_foot, pottery_dark)
 
 func _on_orientation_changed(new_orientation):
 	print("Player orientation changed to: ", new_orientation)

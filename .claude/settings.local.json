@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(grep:*)",
+      "Bash(mkdir:*)",
+      "Bash(rg:*)",
+      "Bash(/usr/bin/Redot --headless --editor --quit)",
+      "Bash(/usr/bin/Redot:*)",
+      "Bash(redot TestWorld.tscn)"
     ],
     "deny": []
   }

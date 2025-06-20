@@ -1,0 +1,235 @@
+[gd_scene load_steps=2 format=3 uid="uid://wpfuyd5q0ypr"]
+
+[ext_resource type="Script" uid="uid://q0c8m16xevab" path="res://character_editor.gd" id="1_editor"]
+
+[node name="CharacterEditor" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_editor")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="EntitySelectorContainer" type="HBoxContainer" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="EntityLabel" type="Label" parent="VBoxContainer/EntitySelectorContainer"]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+text = "Entity:"
+
+[node name="PrevEntityButton" type="Button" parent="VBoxContainer/EntitySelectorContainer"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+text = "◀"
+
+[node name="EntityNameEdit" type="LineEdit" parent="VBoxContainer/EntitySelectorContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Human"
+placeholder_text = "Entity Name"
+
+[node name="NextEntityButton" type="Button" parent="VBoxContainer/EntitySelectorContainer"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+text = "▶"
+
+[node name="SaveEntityButton" type="Button" parent="VBoxContainer/EntitySelectorContainer"]
+custom_minimum_size = Vector2(60, 30)
+layout_mode = 2
+text = "Save"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LeftPanel" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+size_flags_horizontal = 2
+
+[node name="FullCharacterLabel" type="Label" parent="VBoxContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+text = "Full Entity Preview"
+horizontal_alignment = 1
+
+[node name="ZoomContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+
+[node name="ZoomOutButton" type="Button" parent="VBoxContainer/HBoxContainer/LeftPanel/ZoomContainer"]
+layout_mode = 2
+text = "Zoom -"
+
+[node name="ZoomLabel" type="Label" parent="VBoxContainer/HBoxContainer/LeftPanel/ZoomContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Zoom: 100%"
+horizontal_alignment = 1
+
+[node name="ZoomInButton" type="Button" parent="VBoxContainer/HBoxContainer/LeftPanel/ZoomContainer"]
+layout_mode = 2
+text = "Zoom +"
+
+[node name="GroundContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/LeftPanel"]
+layout_mode = 2
+
+[node name="GroundLabel" type="Label" parent="VBoxContainer/HBoxContainer/LeftPanel/GroundContainer"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Ground Level:"
+
+[node name="GroundDownButton" type="Button" parent="VBoxContainer/HBoxContainer/LeftPanel/GroundContainer"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+text = "▼"
+
+[node name="GroundValueLabel" type="Label" parent="VBoxContainer/HBoxContainer/LeftPanel/GroundContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0.0"
+horizontal_alignment = 1
+
+[node name="GroundUpButton" type="Button" parent="VBoxContainer/HBoxContainer/LeftPanel/GroundContainer"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+text = "▲"
+
+[node name="FullCharacterPreview" type="Control" parent="VBoxContainer/HBoxContainer/LeftPanel"]
+custom_minimum_size = Vector2(380, 500)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Divider1" type="VSeparator" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="CenterPanel" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(450, 0)
+layout_mode = 2
+size_flags_horizontal = 2
+
+[node name="PartNavigationContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/CenterPanel"]
+layout_mode = 2
+
+[node name="PrevPartButton" type="Button" parent="VBoxContainer/HBoxContainer/CenterPanel/PartNavigationContainer"]
+layout_mode = 2
+text = "◀"
+
+[node name="PartLabel" type="Label" parent="VBoxContainer/HBoxContainer/CenterPanel/PartNavigationContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Head"
+horizontal_alignment = 1
+
+[node name="NextPartButton" type="Button" parent="VBoxContainer/HBoxContainer/CenterPanel/PartNavigationContainer"]
+layout_mode = 2
+text = "▶"
+
+[node name="InstanceContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/CenterPanel"]
+layout_mode = 2
+
+[node name="PrevInstanceButton" type="Button" parent="VBoxContainer/HBoxContainer/CenterPanel/InstanceContainer"]
+layout_mode = 2
+text = "◀"
+
+[node name="InstanceLabel" type="Label" parent="VBoxContainer/HBoxContainer/CenterPanel/InstanceContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Right"
+horizontal_alignment = 1
+
+[node name="NextInstanceButton" type="Button" parent="VBoxContainer/HBoxContainer/CenterPanel/InstanceContainer"]
+layout_mode = 2
+text = "▶"
+
+[node name="SyncContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/CenterPanel"]
+layout_mode = 2
+
+[node name="SyncInstancesButton" type="Button" parent="VBoxContainer/HBoxContainer/CenterPanel/SyncContainer"]
+layout_mode = 2
+tooltip_text = "Copy current instance shape to all other instances"
+text = "Sync Instances"
+
+[node name="ResetContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/CenterPanel"]
+layout_mode = 2
+
+[node name="ResetLabel" type="Label" parent="VBoxContainer/HBoxContainer/CenterPanel/ResetContainer"]
+layout_mode = 2
+text = "Reset:"
+
+[node name="ResetPolygonButton" type="Button" parent="VBoxContainer/HBoxContainer/CenterPanel/ResetContainer"]
+layout_mode = 2
+tooltip_text = "Reset current body part to default shape"
+text = "Reset Polygon"
+
+[node name="ResetPositionButton" type="Button" parent="VBoxContainer/HBoxContainer/CenterPanel/ResetContainer"]
+layout_mode = 2
+tooltip_text = "Reset current body part position to attachment point"
+text = "Reset Position"
+
+[node name="PartPreview" type="Control" parent="VBoxContainer/HBoxContainer/CenterPanel"]
+custom_minimum_size = Vector2(420, 500)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Divider2" type="VSeparator" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
+[node name="RightPanel" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CoordinatesLabel" type="Label" parent="VBoxContainer/HBoxContainer/RightPanel"]
+layout_mode = 2
+text = "Polygon Coordinates"
+horizontal_alignment = 1
+
+[node name="CoordinatesContainer" type="ScrollContainer" parent="VBoxContainer/HBoxContainer/RightPanel"]
+custom_minimum_size = Vector2(0, 300)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CoordinatesList" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/RightPanel/CoordinatesContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ScriptOutputLabel" type="Label" parent="VBoxContainer/HBoxContainer/RightPanel"]
+layout_mode = 2
+text = "Generated Script"
+horizontal_alignment = 1
+
+[node name="ScriptOutput" type="TextEdit" parent="VBoxContainer/HBoxContainer/RightPanel"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+placeholder_text = "Generated GDScript will appear here..."
+editable = false
+
+[node name="ExportButton" type="Button" parent="VBoxContainer/HBoxContainer/RightPanel"]
+layout_mode = 2
+text = "Export Entity"
+
+[connection signal="pressed" from="VBoxContainer/EntitySelectorContainer/PrevEntityButton" to="." method="_on_prev_entity_pressed"]
+[connection signal="text_changed" from="VBoxContainer/EntitySelectorContainer/EntityNameEdit" to="." method="_on_entity_name_changed"]
+[connection signal="pressed" from="VBoxContainer/EntitySelectorContainer/NextEntityButton" to="." method="_on_next_entity_pressed"]
+[connection signal="pressed" from="VBoxContainer/EntitySelectorContainer/SaveEntityButton" to="." method="_on_save_entity_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/LeftPanel/ZoomContainer/ZoomOutButton" to="." method="_on_zoom_out_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/LeftPanel/ZoomContainer/ZoomInButton" to="." method="_on_zoom_in_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/LeftPanel/GroundContainer/GroundDownButton" to="." method="_on_ground_down_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/LeftPanel/GroundContainer/GroundUpButton" to="." method="_on_ground_up_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/CenterPanel/PartNavigationContainer/PrevPartButton" to="." method="_on_prev_part_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/CenterPanel/PartNavigationContainer/NextPartButton" to="." method="_on_next_part_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/CenterPanel/InstanceContainer/PrevInstanceButton" to="." method="_on_prev_instance_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/CenterPanel/InstanceContainer/NextInstanceButton" to="." method="_on_next_instance_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/CenterPanel/SyncContainer/SyncInstancesButton" to="." method="_on_sync_instances_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/CenterPanel/ResetContainer/ResetPolygonButton" to="." method="_on_reset_polygon_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/CenterPanel/ResetContainer/ResetPositionButton" to="." method="_on_reset_position_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/RightPanel/ExportButton" to="." method="_on_export_button_pressed"]
