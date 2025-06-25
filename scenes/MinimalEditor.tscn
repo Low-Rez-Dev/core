@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/MinimalEditor.gd" id="1"]
+
+[node name="MinimalEditor" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Controls" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="AddButton" type="Button" parent="VBox/Controls"]
+layout_mode = 2
+text = "Add Shape"
+
+[node name="ClearButton" type="Button" parent="VBox/Controls"]
+layout_mode = 2
+text = "Clear All"
+
+[node name="Canvas" type="Control" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(GODOT_SILENCE_ROOT_WARNING=1 /usr/bin/Redot --headless --quit --path /home/ad/Game/core)",
+      "Bash(sed:*)",
+      "Bash(/usr/bin/Redot:*)"
+    ],
+    "deny": []
+  }
+}

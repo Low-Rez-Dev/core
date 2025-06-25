@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://bofnxq2d0mpj8"]
+
+[ext_resource type="PackedScene" uid="uid://bqm8x4r2f5oap" path="res://scenes/EntityEditor.tscn" id="1_0hdqx"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="EntityEditor" parent="." instance=ExtResource("1_0hdqx")]
+layout_mode = 1
